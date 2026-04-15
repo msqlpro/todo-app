@@ -1338,7 +1338,7 @@ function rebuildSpacesDropdowns(){
   const opts=spaces.map(sp=>`<option value="${sp.name}">${sp.name}</option>`).join('');
   ['panelGroup','qmGroup'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el){el.innerHTML=opts;}
+    if(el){el.innerHTML=opts;const workOpt=[...el.options].find(o=>o.value.toLowerCase()==='work');if(workOpt)el.value=workOpt.value;}
   });
 }
 
