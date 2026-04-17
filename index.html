@@ -300,8 +300,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .empty-sub{font-size:13px;color:var(--text2)}
 
 /* TOAST */
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:#fff;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:500;z-index:999;transition:transform .25s;white-space:nowrap;box-shadow:var(--shadow-lg)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:#fff;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:500;z-index:999;transition:transform .25s;white-space:nowrap;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:14px}
 .toast.show{transform:translateX(-50%) translateY(0)}
+.toast-msg{color:#fff}
+.toast-undo{border:none;background:transparent;color:var(--accent);font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;padding:2px;text-transform:uppercase;letter-spacing:.04em;transition:opacity .15s}
+.toast-undo:hover{opacity:.8}
 
 /* RESPONSIVE */
 @media(max-width:768px){
@@ -683,7 +686,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast"><span class="toast-msg" id="toastMsg"></span><button class="toast-undo" id="toastUndo" style="display:none">Undo</button></div>
 
 <!-- EVENT MODAL -->
 <div class="modal-bg" id="evModal" onclick="if(event.target===this)closeEvModal()">
@@ -822,15 +825,29 @@ async function updateTodo(id,fields){
   updateCounts();render();
 }
 async function deleteTodo(id){
+  const snapshot=todos.find(t=>t.id===id);
+  if(!snapshot)return;
   await sb.from('todos').delete().eq('id',id);
   todos=todos.filter(t=>t.id!==id);updateCounts();render();
+  const msg='Deleted "'+snapshot.text.slice(0,40)+(snapshot.text.length>40?'…':'')+'"';
+  registerUndo(msg,async()=>{
+    const {data,error}=await sb.from('todos').insert(snapshot).select().single();
+    if(error)throw error;
+    todos.push(data);updateCounts();render();
+  });
 }
 async function clearDone(){
-  const ids=todos.filter(t=>t.done).map(t=>t.id);
-  if(!ids.length){toast('No completed tasks');return;}
+  const completed=todos.filter(t=>t.done);
+  if(!completed.length){toast('No completed tasks');return;}
+  const snapshots=completed.map(t=>({...t}));
+  const ids=completed.map(t=>t.id);
   await sb.from('todos').delete().in('id',ids);
   todos=todos.filter(t=>!t.done);updateCounts();render();
-  toast(`Cleared ${ids.length} completed task${ids.length>1?'s':''}`);
+  registerUndo(`Cleared ${ids.length} completed task${ids.length>1?'s':''}`,async()=>{
+    const {data,error}=await sb.from('todos').insert(snapshots).select();
+    if(error)throw error;
+    todos.push(...data);updateCounts();render();
+  });
 }
 async function bulkAdd(texts, spaceName){
   const group=spaceName||'Imported';
@@ -1150,22 +1167,35 @@ document.getElementById('panelOverlay').addEventListener('click',function(e){
 });
 async function savePanel(){
   if(!panelId)return;
+  const pre=todos.find(t=>t.id===panelId);
+  const snap=pre?{text:pre.text,status:pre.status,done:pre.done,priority:pre.priority,
+    due_date:pre.due_date,notes:pre.notes,group_name:pre.group_name,completed_at:pre.completed_at}:null;
   const status=document.getElementById('panelStatus').value;
   const txt=document.getElementById('panelTitle').value.trim()||'Untitled';
-  await updateTodo(panelId,{
+  const patch={
     text:txt,status,done:status==='done',
     priority:document.getElementById('panelPriority').value,
     due_date:document.getElementById('panelDue').value?document.getElementById('panelDue').value.slice(0,10):null,
     notes:document.getElementById('panelNotes').value||null,
     group_name:document.getElementById('panelGroup').value||'General',
     completed_at:status==='done'?new Date().toISOString():null,
-  });
-  closePanel();toast('Saved ✓');
+  };
+  await updateTodo(panelId,patch);
+  const idCopy=panelId;
+  closePanel();
+  const changed=snap&&Object.keys(patch).some(k=>JSON.stringify(patch[k])!==JSON.stringify(snap[k]));
+  if(changed){
+    registerUndo('Saved task — undo changes?',async()=>{
+      await updateTodo(idCopy,snap);
+    });
+  } else {
+    toast('Saved ✓');
+  }
 }
 async function deleteFromPanel(){
   if(!panelId)return;
   await deleteTodo(panelId);
-  closePanel();toast('Deleted');
+  closePanel();
 }
 
 // ── INLINE ACTIONS ───────────────────────────────────────────────
@@ -1195,7 +1225,14 @@ function openDuePicker(id,chip){
 }
 async function setStatus(id,status){
   closeAllDropdowns();
+  const t=todos.find(x=>x.id===id);
+  const snap=t?{status:t.status,done:t.done,completed_at:t.completed_at}:null;
   await updateTodo(id,{status,done:status==='done',completed_at:status==='done'?new Date().toISOString():null});
+  if(snap&&status==='done'&&!snap.done){
+    registerUndo('Marked done — "'+(t.text||'').slice(0,30)+'"',async()=>{
+      await updateTodo(id,snap);
+    });
+  }
 }
 async function setPri(id,priority){
   closeAllDropdowns();
@@ -1207,7 +1244,13 @@ async function setDue(id,val){
 async function toggleDone(id){
   const t=todos.find(x=>x.id===id);if(!t)return;
   const nd=!t.done;
+  const snap={done:t.done,status:t.status,completed_at:t.completed_at};
   await updateTodo(id,{done:nd,status:nd?'done':(t.status==='done'?'not_started':t.status),completed_at:nd?new Date().toISOString():null});
+  if(nd){
+    registerUndo('Marked done — "'+(t.text||'').slice(0,30)+'"',async()=>{
+      await updateTodo(id,snap);
+    });
+  }
 }
 
 // ── QUICK ADD ────────────────────────────────────────────────────
@@ -1343,8 +1386,33 @@ function setSync(state,label){
 let toastT;
 function toast(msg){
   const el=document.getElementById('toast');
-  el.textContent=msg;el.classList.add('show');
+  document.getElementById('toastMsg').textContent=msg;
+  document.getElementById('toastUndo').style.display='none';
+  el.classList.add('show');
   clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// Single-slot undo. Registering a new undo replaces any previous pending one.
+// Toast shows for UNDO_WINDOW_MS; clicking Undo invokes applyFn() to reverse.
+const UNDO_WINDOW_MS=8000;
+let pendingUndo=null;
+function registerUndo(msg,applyFn){
+  pendingUndo={msg,applyFn};
+  const el=document.getElementById('toast');
+  const undoBtn=document.getElementById('toastUndo');
+  document.getElementById('toastMsg').textContent=msg;
+  undoBtn.style.display='inline-block';
+  undoBtn.onclick=async()=>{
+    if(!pendingUndo)return;
+    const fn=pendingUndo.applyFn;
+    pendingUndo=null;
+    el.classList.remove('show');
+    try{await fn();toast('Undone ✓');}
+    catch(err){toast('Undo failed: '+(err.message||err));}
+  };
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>{el.classList.remove('show');pendingUndo=null;},UNDO_WINDOW_MS);
 }
 
 // keyboard shortcuts
@@ -1684,11 +1752,19 @@ async function submitEvent(){
 }
 
 async function deleteEvent(id){
+  const snap=events.find(e=>e.id===id);
+  if(!snap)return;
   await sb.from('events').delete().eq('id',id);
   events=events.filter(e=>e.id!==id);
   updateEvCount();
   if(curView==='events')renderEvents();
-  toast('Event deleted');
+  registerUndo('Deleted event — "'+(snap.title||'').slice(0,30)+'"',async()=>{
+    const {data,error}=await sb.from('events').insert(snap).select().single();
+    if(error)throw error;
+    events.push(data);
+    updateEvCount();
+    if(curView==='events')renderEvents();
+  });
 }
 
 
@@ -1824,6 +1900,10 @@ async function onDrop(e, targetId){
   const newPriority=tgtTask.priority||'none';
   const priorityChanged=newPriority!==(srcTask.priority||'none');
 
+  // Snapshot for undo before mutating
+  const oldSortOrder=srcTask.sort_order;
+  const oldPriority=srcTask.priority;
+
   // Optimistic local update
   srcTask.sort_order=newSO;
   if(priorityChanged)srcTask.priority=newPriority;
@@ -1841,7 +1921,9 @@ async function onDrop(e, targetId){
 
   if(priorityChanged){
     const labels={urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'No priority'};
-    showPriToast(`Priority → ${labels[newPriority]}`);
+    registerUndo(`Priority → ${labels[newPriority]}`,async()=>{
+      await updateTodo(dragId,{sort_order:oldSortOrder,priority:oldPriority});
+    });
   } else {
     showPriToast('Order saved ✓');
   }
