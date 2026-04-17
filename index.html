@@ -839,9 +839,53 @@ async function bulkAdd(texts, spaceName){
   if(error){toast('Import failed');return 0;}
   todos.push(...data);updateCounts();render();return data.length;
 }
+function applyRealtimeChange(payload){
+  // Apply INSERT/UPDATE/DELETE to local todos array without a full refetch.
+  // Idempotent: re-applying the same change is a no-op, so echoes of our own
+  // optimistic updates are harmless.
+  const evt=payload.eventType;
+  if(evt==='INSERT'){
+    const row=payload.new;
+    if(!row||!row.id)return;
+    if(todos.some(t=>t.id===row.id))return; // already have it (our own insert)
+    todos.push(row);
+  } else if(evt==='UPDATE'){
+    const row=payload.new;
+    if(!row||!row.id)return;
+    const i=todos.findIndex(t=>t.id===row.id);
+    if(i===-1){todos.push(row);}
+    else{todos[i]={...todos[i],...row};}
+  } else if(evt==='DELETE'){
+    const oldRow=payload.old;
+    if(!oldRow||!oldRow.id)return;
+    const before=todos.length;
+    todos=todos.filter(t=>t.id!==oldRow.id);
+    if(todos.length===before)return; // wasn't there
+  } else {
+    return;
+  }
+  updateCounts();
+  render();
+}
+
+let rtHadError=false;
 function subscribeRealtime(){
-  sb.channel('todos-rt').on('postgres_changes',{event:'*',schema:'public',table:'todos'},loadTodos)
-    .subscribe(s=>{if(s==='SUBSCRIBED')setSync('live','live');if(s==='CHANNEL_ERROR')setSync('err','error');});
+  sb.channel('todos-rt')
+    .on('postgres_changes',{event:'*',schema:'public',table:'todos'},applyRealtimeChange)
+    .subscribe(s=>{
+      if(s==='SUBSCRIBED'){
+        setSync('live','live');
+        // If we're reconnecting after an error, resync once to catch missed events.
+        if(rtHadError){rtHadError=false;loadTodos();}
+      }
+      if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'){
+        rtHadError=true;
+        setSync('err','reconnecting…');
+      }
+      if(s==='CLOSED'){
+        setSync('err','disconnected');
+      }
+    });
 }
 
 // ── HELPERS ─────────────────────────────────────────────────────
