@@ -428,6 +428,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
     <label class="field-label">Password</label>
     <input class="field-input" type="password" id="authPass" placeholder="Password" autocomplete="current-password">
     <button class="auth-submit" id="authSubmit">Sign in</button>
+    <div style="text-align:center;margin-top:14px">
+      <button type="button" id="forgotLink" style="background:none;border:none;color:var(--text2);font-size:12px;font-family:var(--fb);cursor:pointer;text-decoration:underline;padding:4px">Forgot password?</button>
+    </div>
   </div>
 </div>
 
@@ -801,6 +804,22 @@ document.getElementById('authPass').addEventListener('keydown',e=>{if(e.key==='E
 document.getElementById('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('authPass').focus();});
 function showAuthErr(m){const el=document.getElementById('authErr');el.textContent=m;el.style.display='block';}
 function signOut(){sb.auth.signOut();}
+
+document.getElementById('forgotLink').onclick=async()=>{
+  const email=document.getElementById('authEmail').value.trim();
+  if(!email){showAuthErr('Enter your email above, then click Forgot password.');return;}
+  const link=document.getElementById('forgotLink');
+  link.disabled=true;link.textContent='Sending…';
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
+  link.disabled=false;link.textContent='Forgot password?';
+  if(error){showAuthErr(error.message);return;}
+  const el=document.getElementById('authErr');
+  el.textContent='Check your email for a reset link.';
+  el.style.display='block';
+  el.style.background='var(--medium-bg)';
+  el.style.borderColor='var(--medium-border)';
+  el.style.color='var(--medium)';
+};
 
 // ── DATA ────────────────────────────────────────────────────────
 async function loadTodos(){
