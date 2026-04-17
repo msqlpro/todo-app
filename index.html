@@ -1757,6 +1757,27 @@ function onDragLeave(e){
   e.currentTarget.classList.remove('drag-over-top','drag-over-bottom');
 }
 
+// Pick a sort_order strictly between prev and next (either may be null).
+// Returns null if the gap is too small — caller should rebalance.
+const MIN_GAP=0.0001;
+function pickSortOrderBetween(prevSO,nextSO){
+  if(prevSO==null&&nextSO==null)return 1000;
+  if(prevSO==null)return nextSO-1000;
+  if(nextSO==null)return prevSO+1000;
+  if(nextSO-prevSO<MIN_GAP)return null;
+  return(prevSO+nextSO)/2;
+}
+
+// Rebalance: reassign sort_order = i*1000 to every row in the full ordered
+// array. One-time cost to unstick fractional collisions. Returns the new
+// sort_order values as a map { id -> sort_order }.
+async function rebalanceSortOrders(){
+  const ordered=[...todos].sort((a,b)=>(a.sort_order??0)-(b.sort_order??0));
+  const updates=ordered.map((t,i)=>({id:t.id,sort_order:i*1000}));
+  updates.forEach(u=>{const t=todos.find(x=>x.id===u.id);if(t)t.sort_order=u.sort_order;});
+  await Promise.all(updates.map(u=>sb.from('todos').update({sort_order:u.sort_order}).eq('id',u.id)));
+}
+
 async function onDrop(e, targetId){
   e.preventDefault();
   const row=e.currentTarget;
@@ -1767,47 +1788,58 @@ async function onDrop(e, targetId){
   const tgtTask=todos.find(t=>t.id===targetId);
   if(!srcTask||!tgtTask)return;
 
-  // Get current filtered+sorted list to find neighbours
-  const list=getFiltered();
-  const tgtIdx=list.findIndex(t=>t.id===targetId);
-  const srcIdx=list.findIndex(t=>t.id===dragId);
-  if(tgtIdx===-1)return;
+  // Source of truth for ordering is the full todos array sorted by sort_order.
+  // The filtered list is only used to find the right visual neighbour for
+  // priority inheritance (what the user actually sees next to the drop).
+  // If any rows have null/undefined sort_order (legacy data), normalise first.
+  if(todos.some(t=>t.sort_order==null)){
+    await rebalanceSortOrders();
+  }
+  const full=[...todos].sort((a,b)=>(a.sort_order??0)-(b.sort_order??0));
+  const fullTgtIdx=full.findIndex(t=>t.id===targetId);
+  if(fullTgtIdx===-1)return;
 
-  // Reorder the list in memory
-  const reordered=[...list];
-  reordered.splice(srcIdx,1); // remove src
-  const insertAt=reordered.findIndex(t=>t.id===targetId);
-  const finalIdx=dropPosition==='top'?insertAt:insertAt+1;
-  reordered.splice(finalIdx,0,srcTask);
+  // Determine prev/next in the full ordered array, skipping the dragged task.
+  let prev=null,next=null;
+  if(dropPosition==='top'){
+    for(let i=fullTgtIdx-1;i>=0;i--){if(full[i].id!==dragId){prev=full[i];break;}}
+    next=tgtTask;
+  } else {
+    prev=tgtTask;
+    for(let i=fullTgtIdx+1;i<full.length;i++){if(full[i].id!==dragId){next=full[i];break;}}
+  }
 
-  // Assign new sort_order values (space them out)
-  const updates=reordered.map((t,i)=>({id:t.id,sort_order:i*10}));
+  // Compute new sort_order; rebalance and retry if the gap is exhausted.
+  let newSO=pickSortOrderBetween(prev?prev.sort_order:null,next?next.sort_order:null);
+  if(newSO==null){
+    await rebalanceSortOrders();
+    const freshPrev=prev?todos.find(t=>t.id===prev.id):null;
+    const freshNext=next?todos.find(t=>t.id===next.id):null;
+    newSO=pickSortOrderBetween(freshPrev?freshPrev.sort_order:null,freshNext?freshNext.sort_order:null);
+    if(newSO==null)return; // shouldn't happen after a rebalance
+  }
 
-  // Inherit priority from the task it's now next to
-  const neighbour=dropPosition==='top'?reordered[finalIdx+1]:reordered[finalIdx-1];
-  const newPriority=neighbour?neighbour.priority||'none':srcTask.priority;
-  const priorityChanged=newPriority!==srcTask.priority;
+  // Priority inheritance: when you drop onto a task, the visible neighbour
+  // you're landing next to is that target. Inherit its priority.
+  const newPriority=tgtTask.priority||'none';
+  const priorityChanged=newPriority!==(srcTask.priority||'none');
 
-  // Update sort_order in todos array immediately (optimistic)
-  updates.forEach(u=>{
-    const t=todos.find(x=>x.id===u.id);
-    if(t)t.sort_order=u.sort_order;
-  });
+  // Optimistic local update
+  srcTask.sort_order=newSO;
   if(priorityChanged)srcTask.priority=newPriority;
 
-  // Switch sort to manual so the new order sticks
+  // Switch to manual sort so the new order is visible
   sortMode='manual';
   document.getElementById('sortSel').value='manual';
   render();
 
-  // Save all sort_order changes to Supabase in one go
-  await Promise.all(updates.map(u=>
-    sb.from('todos').update({sort_order:u.sort_order}).eq('id',u.id)
-  ));
+  // Single row write (plus priority if it changed)
+  const patch={sort_order:newSO};
+  if(priorityChanged)patch.priority=newPriority;
+  const {error}=await sb.from('todos').update(patch).eq('id',dragId);
+  if(error){toast('Save failed: '+error.message);return;}
 
-  // Save priority change if needed
   if(priorityChanged){
-    await sb.from('todos').update({priority:newPriority}).eq('id',dragId);
     const labels={urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'No priority'};
     showPriToast(`Priority → ${labels[newPriority]}`);
   } else {
