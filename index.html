@@ -108,6 +108,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .prog-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:500}
 .prog-track{height:7px;background:var(--border);border-radius:99px;overflow:hidden}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),#f59e0b);border-radius:99px;transition:width .5s ease}
+.ver-badge{flex-shrink:0;align-self:center;font-family:var(--fb);font-size:10px;font-weight:600;color:var(--text2);opacity:.55;letter-spacing:.3px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);white-space:nowrap}
 
 /* TOOLBAR */
 .toolbar{padding:10px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0}
@@ -536,6 +537,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <div class="prog-labels"><span>Overall Progress</span><span id="d-pct">0%</span></div>
         <div class="prog-track"><div class="prog-fill" id="d-fill" style="width:0%"></div></div>
       </div>
+      <div class="ver-badge" id="verBadge" title="App version">v—</div>
     </div>
 
     <div class="toolbar">
@@ -754,6 +756,11 @@ const sb=createClient(SB_URL,SB_KEY);
 
 let todos=[],user=null,isSignUp=false;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='';
+// ── APP VERSION ─ bump on every meaningful change ──
+// patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
+const APP_VERSION='1.5.0';
+const APP_BUILD='2026-04-19';
+(function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
 let importLines=[];
 
