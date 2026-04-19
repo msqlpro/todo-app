@@ -543,7 +543,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       <select class="sort-select" id="sortSel" onchange="onSort()">
         <option value="manual">✋ Manual Order</option>
         <option value="smart">🧠 Smart</option>
-        <option value="priority">🔴 Priority</option>
+        <option value="priority" selected>🔴 Priority</option>
         <option value="due">📅 Due Date</option>
         <option value="status">📊 Status</option>
         <option value="created">🕐 Created</option>
@@ -753,7 +753,7 @@ const {createClient}=supabase;
 const sb=createClient(SB_URL,SB_KEY);
 
 let todos=[],user=null,isSignUp=false;
-let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='';
+let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='';
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
 let importLines=[];
 
@@ -996,7 +996,14 @@ function getFiltered(){
       const score=t=>{let s=(PRI[t.priority]??4)*2;if(isOverdue(t))s-=20;else if(isDueSoon(t))s-=8;return s;};
       return score(a)-score(b);
     }
-    if(sortMode==='priority')return(PRI[a.priority]??4)-(PRI[b.priority]??4);
+    if(sortMode==='priority'){
+      const d=(PRI[a.priority]??4)-(PRI[b.priority]??4);
+      if(d)return d;
+      if(a.due_date&&!b.due_date)return -1;
+      if(!a.due_date&&b.due_date)return 1;
+      if(a.due_date&&b.due_date){const dd=a.due_date.localeCompare(b.due_date);if(dd)return dd;}
+      return(a.sort_order??0)-(b.sort_order??0);
+    }
     if(sortMode==='due'){if(!a.due_date&&!b.due_date)return 0;if(!a.due_date)return 1;if(!b.due_date)return -1;return a.due_date.localeCompare(b.due_date);}
     if(sortMode==='status')return(STA[a.status]??3)-(STA[b.status]??3);
     if(sortMode==='created')return new Date(a.created_at)-new Date(b.created_at);
