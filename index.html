@@ -92,6 +92,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .search-input{width:100%;background:var(--surface2);border:1.5px solid transparent;border-radius:8px;padding:6px 10px 6px 30px;font-family:var(--fb);font-size:13px;color:var(--text);outline:none;transition:all .15s}
 .search-input:focus{background:var(--surface);border-color:var(--accent)}
 .search-input::placeholder{color:var(--text3)}
+.search-inc{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);font-weight:600;cursor:pointer;white-space:nowrap;user-select:none;flex-shrink:0;padding:4px 8px;border-radius:6px;transition:background .15s}
+.search-inc:hover{background:var(--surface2)}
+.search-inc input{margin:0;cursor:pointer;accent-color:var(--accent);width:14px;height:14px}
 .tb-spacer{flex:1}
 .view-toggle{display:flex;background:var(--surface2);border-radius:8px;padding:2px;gap:1px;flex-shrink:0}
 .view-btn{border:none;background:transparent;border-radius:6px;padding:5px 8px;cursor:pointer;color:var(--text3);transition:all .15s;display:flex;align-items:center}
@@ -576,6 +579,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><path d="M5.5 1a4.5 4.5 0 1 0 2.6 8.18l2.63 2.62.7-.7-2.62-2.63A4.5 4.5 0 0 0 5.5 1zm0 1.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
         <input class="search-input" id="searchInput" placeholder="Search tasks…" oninput="onSearch()">
       </div>
+      <label class="search-inc" title="Also include matching completed tasks in search results">
+        <input type="checkbox" id="searchIncDone" onchange="onSearchIncDoneChange()">
+        <span>Inc. done</span>
+      </label>
       <div class="tb-spacer"></div>
       <div class="view-toggle">
         <button class="view-btn active" id="vbList" onclick="setDisplayMode('list')" title="List">
@@ -829,10 +836,10 @@ const {createClient}=supabase;
 const sb=createClient(SB_URL,SB_KEY);
 
 let todos=[],user=null,isSignUp=false;
-let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='';
+let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.7.2';
+const APP_VERSION='1.7.3';
 const APP_BUILD='2026-04-21';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1077,7 +1084,17 @@ function getFiltered(){
   else if(curView.startsWith('space_')){const sn=curView.slice(6).toLowerCase();list=list.filter(t=>(t.group_name||'').toLowerCase()===sn&&!t.done);}
   if(filterMode==='no_due')list=list.filter(t=>!t.due_date&&!t.done);
   else if(filterMode!=='all')list=list.filter(t=>t.priority===filterMode&&!t.done);
-  if(searchQ)list=list.filter(t=>t.text.toLowerCase().includes(searchQ)||(t.notes||'').toLowerCase().includes(searchQ));
+  if(searchQ){
+    list=list.filter(t=>t.text.toLowerCase().includes(searchQ)||(t.notes||'').toLowerCase().includes(searchQ));
+    if(searchIncDone){
+      const existing=new Set(list.map(t=>t.id));
+      todos.forEach(t=>{
+        if(t.done&&!existing.has(t.id)&&(t.text.toLowerCase().includes(searchQ)||(t.notes||'').toLowerCase().includes(searchQ))){
+          list.push(t);
+        }
+      });
+    }
+  }
   list.sort((a,b)=>{
     if(sortMode==='manual')return(a.sort_order??0)-(b.sort_order??0);
     if(sortMode==='smart'){
@@ -1579,6 +1596,11 @@ function onFilter(el){
   el.classList.add('active');filterMode=el.dataset.f;render();
 }
 function onSearch(){searchQ=document.getElementById('searchInput').value.toLowerCase().trim();render();}
+function onSearchIncDoneChange(){
+  searchIncDone=document.getElementById('searchIncDone').checked;
+  localStorage.setItem('searchIncDone',searchIncDone?'1':'0');
+  render();
+}
 function toggleGroup(header){
   const body=header.nextElementSibling;
   const ch=header.querySelector('.group-chevron');
@@ -2024,6 +2046,11 @@ function toggleSortToolbar(show){
   if(localStorage.getItem('showSortToolbar')==='1'){
     const el=document.getElementById('sortToolbarBit');
     if(el)el.style.display='flex';
+  }
+  if(localStorage.getItem('searchIncDone')==='1'){
+    searchIncDone=true;
+    const cb=document.getElementById('searchIncDone');
+    if(cb)cb.checked=true;
   }
 })();
 

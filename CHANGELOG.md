@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.7.3 — 2026-04-21
+
+- **Include completed tasks in search.** New "Inc. done" checkbox next to the search input. When ticked, search results also include matching done tasks that would otherwise be hidden by the current view's filter. Preference persists per device.
+
 ## v1.7.2 — 2026-04-21
 
 - Completed tasks can be reactivated. Clicking the check-circle on a done task un-marks it and returns it to the active list — with a toast and Undo like the "Marked done" action.
