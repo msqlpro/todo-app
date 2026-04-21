@@ -250,16 +250,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .proj-nav-btn:hover{background:var(--surface2)}
 .proj-range{font-size:12px;color:var(--text2);font-weight:500;min-width:150px;text-align:center}
 .gantt{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);position:relative}
-.gantt-row{display:grid;grid-template-columns:200px 1fr;border-bottom:1px solid var(--border);min-height:40px}
+.gantt-row{display:grid;grid-template-columns:200px 1fr;border-bottom:1px solid var(--border);min-height:52px}
 .gantt-row:last-child{border-bottom:none}
-.gantt-row.header{background:var(--surface2);position:sticky;top:0;z-index:5}
-.gantt-label{padding:9px 12px;display:flex;align-items:center;gap:8px;font-size:13px;border-right:1px solid var(--border);overflow:hidden;cursor:pointer;transition:background .15s}
+.gantt-row.header{background:var(--surface2);position:sticky;top:0;z-index:5;min-height:36px}
+.gantt-label{padding:11px 12px;display:flex;align-items:center;gap:8px;font-size:14px;border-right:1px solid var(--border);overflow:hidden;cursor:pointer;transition:background .15s}
 .gantt-label:hover{background:var(--surface2)}
-.gantt-row.header .gantt-label{font-size:11px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:default;background:var(--surface2)}
+.gantt-row.header .gantt-label{font-size:11px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:default;background:var(--surface2);padding:9px 12px}
 .gantt-row.header .gantt-label:hover{background:var(--surface2)}
 .gantt-label-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
-.gantt-label-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.gantt-track{position:relative;min-height:40px}
+.gantt-label-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.gantt-track{position:relative;min-height:52px}
+.gantt-row.header .gantt-track{min-height:36px}
 .gantt-headcols{display:flex;font-size:11px;color:var(--text2);font-weight:600;height:100%}
 .gantt-headcell{flex:1;padding:10px 8px;border-right:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gantt-headcell:last-child{border-right:none}
@@ -268,7 +269,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .gantt-gridcell{flex:1;border-right:1px solid var(--border)}
 .gantt-gridcell:last-child{border-right:none}
 .gantt-today{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:3;pointer-events:none}
-.gantt-bar{position:absolute;top:8px;height:24px;border-radius:5px;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;z-index:2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:1px solid;transition:filter .15s,transform .1s}
+.gantt-bar{position:absolute;top:9px;height:34px;border-radius:6px;display:flex;align-items:center;padding:0 12px;font-size:13px;font-weight:600;cursor:pointer;z-index:2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:1px solid;transition:filter .15s,transform .1s}
 .gantt-bar:hover{filter:brightness(.96);transform:translateY(-1px)}
 .gantt-bar.p-urgent{background:#fef2f2;border-color:#fecaca;color:#991b1b}
 .gantt-bar.p-high{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
@@ -513,6 +514,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       <button class="sb-btn" data-view="urgent" onclick="setView(this)"><span style="width:9px;height:9px;border-radius:50%;background:var(--urgent);display:inline-block;flex-shrink:0"></span>Urgent<span class="sb-badge" id="c-urgent">0</span></button>
       <button class="sb-btn" data-view="high" onclick="setView(this)"><span style="width:9px;height:9px;border-radius:50%;background:var(--high);display:inline-block;flex-shrink:0"></span>High<span class="sb-badge" id="c-high">0</span></button>
       <button class="sb-btn" data-view="medium" onclick="setView(this)"><span style="width:9px;height:9px;border-radius:50%;background:var(--medium);display:inline-block;flex-shrink:0"></span>Medium<span class="sb-badge" id="c-medium">0</span></button>
+      <button class="sb-btn" data-view="low" onclick="setView(this)"><span style="width:9px;height:9px;border-radius:50%;background:var(--low);display:inline-block;flex-shrink:0"></span>Low<span class="sb-badge" id="c-low">0</span></button>
     </div>
     <div class="sb-divider"></div>
     <div class="sb-sec">
@@ -638,7 +640,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <option value="stuck">Stuck</option>
         <option value="done">Done</option>
       </select>
-      <input class="qm-date" type="date" id="qmStart" title="Start date (fill both Start and Due to show in Projects)" placeholder="Start">
+      <input class="qm-date" type="date" id="qmStart" title="Start date (fill both Start and Due to show in Projects)" placeholder="Start" onfocus="defaultToToday(this)">
       <input class="qm-date" type="date" id="qmDue" title="Due date">
       <select class="qm-sel" id="qmGroup">
         <option value="Personal">Personal</option>
@@ -710,7 +712,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 
       <div class="panel-field">
         <span class="panel-field-label">Start Date</span>
-        <input class="panel-date-input" type="date" id="panelStart">
+        <input class="panel-date-input" type="date" id="panelStart" onfocus="defaultToToday(this)">
       </div>
 
       <div class="panel-field">
@@ -811,7 +813,7 @@ let todos=[],user=null,isSignUp=false;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='';
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.6.0';
+const APP_VERSION='1.6.1';
 const APP_BUILD='2026-04-21';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -988,6 +990,7 @@ function subscribeRealtime(){
 
 // ── HELPERS ─────────────────────────────────────────────────────
 function today(){return new Date().toISOString().slice(0,10);}
+function defaultToToday(el){if(el&&!el.value)el.value=today();}
 function isOverdue(t){if(!t.due_date||t.done)return false;return t.due_date.slice(0,10)<today();}
 function isDueToday(t){if(!t.due_date)return false;return t.due_date.slice(0,10)===today();}
 function isDueSoon(t){
@@ -1020,6 +1023,7 @@ function updateCounts(){
   set('c-urgent',active.filter(t=>t.priority==='urgent').length);
   set('c-high',active.filter(t=>t.priority==='high').length);
   set('c-medium',active.filter(t=>t.priority==='medium').length);
+  set('c-low',active.filter(t=>t.priority==='low').length);
   set('c-prog',todos.filter(t=>t.status==='in_progress').length);
   set('c-stuck',todos.filter(t=>t.status==='stuck').length);
   set('c-done',todos.filter(t=>t.done).length);
@@ -1047,6 +1051,7 @@ function getFiltered(){
   else if(curView==='urgent')list=list.filter(t=>t.priority==='urgent'&&!t.done);
   else if(curView==='high')list=list.filter(t=>t.priority==='high'&&!t.done);
   else if(curView==='medium')list=list.filter(t=>t.priority==='medium'&&!t.done);
+  else if(curView==='low')list=list.filter(t=>t.priority==='low'&&!t.done);
   else if(curView==='in_progress')list=list.filter(t=>t.status==='in_progress');
   else if(curView==='stuck')list=list.filter(t=>t.status==='stuck');
   else if(curView==='completed')list=list.filter(t=>t.done);
@@ -1497,7 +1502,7 @@ function parseNotes(raw){
 
 // ── UI CONTROLS ──────────────────────────────────────────────────
 const viewTitles={all:'All Tasks',events:'Events',personal:'Personal',work:'Work',settings:'Settings',today:'Today',upcoming:'Upcoming',overdue:'Overdue',projects:'Projects',
-  urgent:'Urgent Priority',high:'High Priority',medium:'Medium Priority',
+  urgent:'Urgent Priority',high:'High Priority',medium:'Medium Priority',low:'Low Priority',
   in_progress:'In Progress',stuck:'Stuck',completed:'Completed'};
 function setView(el){
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
