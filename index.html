@@ -204,6 +204,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 
 .del-btn{opacity:0;border:none;background:transparent;color:var(--text3);cursor:pointer;padding:3px 5px;border-radius:5px;transition:all .15s;flex-shrink:0;font-size:14px}
 .task-row:hover .del-btn{opacity:1}
+.restore-btn{border:1.5px solid var(--s-done);background:transparent;color:var(--s-done);cursor:pointer;padding:3px 10px;border-radius:6px;font-family:var(--fb);font-size:11px;font-weight:700;flex-shrink:0;transition:all .15s;white-space:nowrap}
+.restore-btn:hover{background:var(--s-done-bg)}
 .del-btn:hover{color:var(--urgent);background:var(--urgent-bg)}
 
 /* BOARD VIEW */
@@ -830,7 +832,7 @@ let todos=[],user=null,isSignUp=false;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='';
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.7.1';
+const APP_VERSION='1.7.2';
 const APP_BUILD='2026-04-21';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1180,6 +1182,7 @@ function renderTaskRow(t){
           <div class="drop-item" onclick="setStatus('${t.id}','done')"><span class="drop-dot" style="background:var(--s-done)"></span>Done</div>
         </div>
       </div>
+      ${t.done?`<button class="restore-btn" onclick="toggleDone('${t.id}')" title="Restore to active tasks">↺ Restore</button>`:''}
       <button class="del-btn" onclick="deleteTodo('${t.id}')" title="Delete">✕</button>
     </div>
   </div>`;
@@ -1442,6 +1445,10 @@ async function toggleDone(id){
   await updateTodo(id,{done:nd,status:nd?'done':(t.status==='done'?'not_started':t.status),completed_at:nd?new Date().toISOString():null});
   if(nd){
     registerUndo('Marked done — "'+(t.text||'').slice(0,30)+'"',async()=>{
+      await updateTodo(id,snap);
+    });
+  } else {
+    registerUndo('Reactivated — "'+(t.text||'').slice(0,30)+'"',async()=>{
       await updateTodo(id,snap);
     });
   }

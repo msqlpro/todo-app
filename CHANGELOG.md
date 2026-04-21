@@ -2,6 +2,11 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.7.2 — 2026-04-21
+
+- Completed tasks can be reactivated. Clicking the check-circle on a done task un-marks it and returns it to the active list — with a toast and Undo like the "Marked done" action.
+- Done rows now also show an explicit **↺ Restore** button beside the delete button, so the affordance is obvious. Most visible on the Completed view where every row is done.
+
 ## v1.7.1 — 2026-04-21
 
 - Brand pill text changed from "TO DO" back to **"FOCAL"**, and recoloured to the Brainbox Candy pink (`#ec008c`) instead of amber. App name is now "Brainbox Candy · Focal" in the browser tab.
