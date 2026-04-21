@@ -13,6 +13,8 @@ Live at **https://msqlpro.github.io/todo-app/**.
 
 **Search.** Full-text across task text and notes. "Inc. done" checkbox next to the search input pulls matching completed tasks into the results, even in views that normally hide them.
 
+**Assignment.** Any task can be assigned to another user via the edit panel. Assigned-to-you tasks appear in your **Inbox** sidebar and interleaved in your main list with a chip showing who assigned it. Tasks you've assigned away appear in your **Assigned** sidebar, removed from your main list. Both parties can edit any field; only the owner can delete. When the assignee marks done, the owner gets a toast alert next time they open the app and a red count badge on the Assigned entry until they view it. Full spec: [docs/assignment.md](docs/assignment.md).
+
 **Other.** Undo for destructive actions (delete, bulk clear, mark done, reactivate). Apple Notes bulk import. Realtime multi-device sync via Supabase with local state updates. Cross-device auth with forgotten-password flow.
 
 ## Tech

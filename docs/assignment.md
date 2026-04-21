@@ -1,6 +1,6 @@
 # Task assignment — feature specification
 
-**Status:** agreed · not yet built
+**Status:** shipped in v1.8.0 (2026-04-21)
 **Target version:** v1.8.0
 
 Every task may optionally be assigned from its owner to another user. Assigned tasks are visible and editable by both parties, show in dedicated sidebar sections, and trigger a completion alert back to the owner.

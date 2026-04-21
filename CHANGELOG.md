@@ -2,6 +2,18 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.0 — 2026-04-21
+
+Task assignment between users. Full spec at [docs/assignment.md](docs/assignment.md).
+
+- **Database** — three new columns (`assigned_to`, `assigned_at`, `assignee_seen`), two updated RLS policies (SELECT and UPDATE now include assignees), a BEFORE UPDATE trigger that auto-manages `assigned_at` on reassignment and flips `assignee_seen` on completion / reactivation.
+- **Profiles** — added `email` column to existing `public.profiles` table, signup trigger keeps it in sync. Used by the assign picker to show friendly names.
+- **Assign picker** — new "Assigned to" field in the task edit panel, lists all other users with "— Not assigned" as the clear option. Contextual hint line tells you who the task is with.
+- **Sidebar** — two new entries under Views: **Inbox** (tasks assigned to you) with a pink count badge, and **Assigned** (tasks you've assigned to others) with a red unseen-completion badge. Both forced to list display.
+- **Row chip** — tasks show a small `→ Nicky` or `← Mark` chip indicating assignment direction. Completed-but-unseen tasks get a red "done" chip until the owner opens or dismisses them.
+- **Main views** — All Tasks, Today, Upcoming, priority views, status views, and space views now hide tasks you've assigned away. Assigned-to-you tasks appear in them in priority order with the chip.
+- **Completion alerts** — when the assignee marks a task done, the owner gets a toast per task next time they load the app: *"Nicky completed: '…'"*. Badge on the Assigned sidebar shows unseen count. Clears when the owner opens the edit panel.
+
 ## v1.7.3 — 2026-04-21
 
 - **Include completed tasks in search.** New "Inc. done" checkbox next to the search input. When ticked, search results also include matching done tasks that would otherwise be hidden by the current view's filter. Preference persists per device.

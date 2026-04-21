@@ -209,6 +209,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .task-row:hover .del-btn{opacity:1}
 .restore-btn{border:1.5px solid var(--s-done);background:transparent;color:var(--s-done);cursor:pointer;padding:3px 10px;border-radius:6px;font-family:var(--fb);font-size:11px;font-weight:700;flex-shrink:0;transition:all .15s;white-space:nowrap}
 .restore-btn:hover{background:var(--s-done-bg)}
+.assign-chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap;flex-shrink:0;letter-spacing:.01em}
+.assign-chip.out{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe}
+.assign-chip.in{background:#fdf2f8;color:#be185d;border:1px solid #fbcfe8}
+.assign-chip.unseen{background:var(--urgent-bg);color:var(--urgent);border-color:var(--urgent-border)}
 .del-btn:hover{color:var(--urgent);background:var(--urgent-bg)}
 
 /* BOARD VIEW */
@@ -527,6 +531,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="2" width="8" height="2" rx="1"/><rect x="3" y="6" width="9" height="2" rx="1"/><rect x="1" y="10" width="6" height="2" rx="1"/></svg>
         Projects<span class="sb-badge" id="c-projects">0</span>
       </button>
+      <button class="sb-btn" data-view="inbox" onclick="setView(this)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M1 2h12v7H9.5l-.5 1h-4l-.5-1H1V2zm0 8.5V12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1.5H9.91l-.5 1h-4.82l-.5-1H1z"/></svg>
+        Inbox<span class="sb-badge" id="c-inbox" style="color:var(--bbc-pink)">0</span>
+      </button>
+      <button class="sb-btn" data-view="assigned" onclick="setView(this)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 1.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 10.5C3 8.6 5 7.5 7 7.5s4 1.1 4 3v1H3v-1zm8.5-5.5 1.5 1.5-2.5 2.5-1-1 2-2z"/></svg>
+        Assigned<span class="sb-badge" id="c-assigned" style="color:var(--urgent)">0</span>
+      </button>
     </div>
     <div class="sb-divider"></div>
     <div class="sb-sec">
@@ -760,6 +772,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       </div>
 
       <div class="panel-field">
+        <span class="panel-field-label">Assigned to</span>
+        <select class="panel-select" id="panelAssignedTo"></select>
+        <div class="panel-field-hint" id="panelAssignedHint" style="font-size:11px;color:var(--text3);margin-top:6px;display:none"></div>
+      </div>
+
+      <div class="panel-field">
         <span class="panel-field-label">Notes</span>
         <textarea class="panel-notes" id="panelNotes" placeholder="Add notes, context, links…"></textarea>
       </div>
@@ -835,11 +853,11 @@ const SB_KEY='sb_publishable_FE2Dibu9t-R6EdJ6s9iWFQ_YYbmd_kY';
 const {createClient}=supabase;
 const sb=createClient(SB_URL,SB_KEY);
 
-let todos=[],user=null,isSignUp=false;
+let todos=[],profiles=[],user=null,isSignUp=false;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.7.3';
+const APP_VERSION='1.8.0';
 const APP_BUILD='2026-04-21';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -861,7 +879,7 @@ function showApp(){
   document.getElementById('sbEmail').textContent=e;
   document.getElementById('sbName').textContent=e.split('@')[0];
   document.getElementById('sbAv').textContent=(e[0]||'U').toUpperCase();
-  loadTodos();loadEvents();loadSpaces();subscribeRealtime();
+  loadTodos();loadEvents();loadSpaces();loadProfiles();subscribeRealtime();
 }
 document.getElementById('tabIn').onclick=()=>{
   isSignUp=false;
@@ -914,6 +932,31 @@ async function loadTodos(){
   const {data,error}=await sb.from('todos').select('*').order('created_at',{ascending:true});
   if(error){setSync('err','error');return;}
   todos=data||[];setSync('live','synced');updateCounts();render();
+  checkAssignmentAlerts();
+}
+async function loadProfiles(){
+  const {data,error}=await sb.from('profiles').select('id,email,display_name');
+  if(error){console.warn('profiles load',error);return;}
+  profiles=data||[];
+  render();
+}
+function userById(id){return profiles.find(p=>p.id===id);}
+function userDisplay(p){
+  if(!p)return 'Unknown';
+  if(p.display_name&&p.display_name.trim())return p.display_name.trim();
+  const e=p.email||'';
+  const n=e.split('@')[0]||'user';
+  return n.charAt(0).toUpperCase()+n.slice(1);
+}
+function userDisplayById(id){return userDisplay(userById(id));}
+function checkAssignmentAlerts(){
+  if(!user)return;
+  const unseen=todos.filter(t=>t.user_id===user.id&&t.done&&t.assignee_seen===false&&t.assigned_to&&t.assigned_to!==user.id);
+  unseen.forEach(t=>{
+    const who=userDisplayById(t.assigned_to);
+    const text=t.text.length>45?t.text.slice(0,45)+'…':t.text;
+    toast(`${who} completed: "${text}"`);
+  });
 }
 async function addTodo(f){
   const row={text:f.text.trim(),done:false,user_id:user.id,priority:f.priority||'none',
@@ -1036,6 +1079,19 @@ function priLabel(p){return{urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 M
 function spClass(s){return{not_started:'sp-not',in_progress:'sp-prog',stuck:'sp-stuck',done:'sp-done'}[s]||'sp-not';}
 function spLabel(s){return{not_started:'Not Started',in_progress:'In Prog…',stuck:'Stuck',done:'Done'}[s]||'Not Started';}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function assignChip(t){
+  if(!t.assigned_to||!user)return '';
+  if(t.user_id===user.id&&t.assigned_to!==user.id){
+    const who=esc(userDisplayById(t.assigned_to));
+    const unseen=t.done&&t.assignee_seen===false;
+    return `<span class="assign-chip out${unseen?' unseen':''}" title="${unseen?who+' completed this — click to review':'Assigned to '+who}">→&nbsp;${who}${unseen?' ✓':''}</span>`;
+  }
+  if(t.assigned_to===user.id&&t.user_id!==user.id){
+    const who=esc(userDisplayById(t.user_id));
+    return `<span class="assign-chip in" title="Assigned to you by ${who}">←&nbsp;${who}</span>`;
+  }
+  return '';
+}
 
 // ── COUNTS ──────────────────────────────────────────────────────
 function updateCounts(){
@@ -1046,6 +1102,8 @@ function updateCounts(){
   set('c-upcoming',todos.filter(t=>{if(!t.due_date||t.done)return false;return t.due_date.slice(0,10)>today();}).length);
   set('c-overdue',todos.filter(isOverdue).length);
   set('c-projects',todos.filter(t=>t.start_date&&t.due_date&&!t.done).length);
+  set('c-inbox',user?todos.filter(t=>t.assigned_to===user.id&&t.user_id!==user.id&&!t.done).length:0);
+  set('c-assigned',user?todos.filter(t=>t.user_id===user.id&&t.done&&t.assignee_seen===false&&t.assigned_to&&t.assigned_to!==user.id).length:0);
   set('c-urgent',active.filter(t=>t.priority==='urgent').length);
   set('c-high',active.filter(t=>t.priority==='high').length);
   set('c-medium',active.filter(t=>t.priority==='medium').length);
@@ -1067,21 +1125,31 @@ function updateCounts(){
 // ── FILTER/SORT ──────────────────────────────────────────────────
 const PRI={urgent:0,high:1,medium:2,low:3,none:4};
 const STA={stuck:0,in_progress:1,not_started:2,done:3};
+function isAssignedAwayByMe(t){
+  return user&&t.user_id===user.id&&t.assigned_to&&t.assigned_to!==user.id;
+}
+function isAssignedToMe(t){
+  return user&&t.assigned_to===user.id&&t.user_id!==user.id;
+}
 function getFiltered(){
   let list=[...todos];
-  if(curView==='all')list=list.filter(t=>!t.done);
-  else if(curView==='today')list=list.filter(t=>isDueToday(t)&&!t.done);
-  else if(curView==='upcoming')list=list.filter(t=>t.due_date&&t.due_date.slice(0,10)>today()&&!t.done);
-  else if(curView==='overdue')list=list.filter(isOverdue);
-  else if(curView==='projects')list=list.filter(t=>t.start_date&&t.due_date&&!t.done);
-  else if(curView==='urgent')list=list.filter(t=>t.priority==='urgent'&&!t.done);
-  else if(curView==='high')list=list.filter(t=>t.priority==='high'&&!t.done);
-  else if(curView==='medium')list=list.filter(t=>t.priority==='medium'&&!t.done);
-  else if(curView==='low')list=list.filter(t=>t.priority==='low'&&!t.done);
-  else if(curView==='in_progress')list=list.filter(t=>t.status==='in_progress');
-  else if(curView==='stuck')list=list.filter(t=>t.status==='stuck');
-  else if(curView==='completed')list=list.filter(t=>t.done);
-  else if(curView.startsWith('space_')){const sn=curView.slice(6).toLowerCase();list=list.filter(t=>(t.group_name||'').toLowerCase()===sn&&!t.done);}
+  // Tasks I own but have assigned away disappear from my main views
+  const hideAssignedAway=t=>!isAssignedAwayByMe(t);
+  if(curView==='all')list=list.filter(t=>!t.done&&hideAssignedAway(t));
+  else if(curView==='today')list=list.filter(t=>isDueToday(t)&&!t.done&&hideAssignedAway(t));
+  else if(curView==='upcoming')list=list.filter(t=>t.due_date&&t.due_date.slice(0,10)>today()&&!t.done&&hideAssignedAway(t));
+  else if(curView==='overdue')list=list.filter(t=>isOverdue(t)&&hideAssignedAway(t));
+  else if(curView==='projects')list=list.filter(t=>t.start_date&&t.due_date&&!t.done&&hideAssignedAway(t));
+  else if(curView==='urgent')list=list.filter(t=>t.priority==='urgent'&&!t.done&&hideAssignedAway(t));
+  else if(curView==='high')list=list.filter(t=>t.priority==='high'&&!t.done&&hideAssignedAway(t));
+  else if(curView==='medium')list=list.filter(t=>t.priority==='medium'&&!t.done&&hideAssignedAway(t));
+  else if(curView==='low')list=list.filter(t=>t.priority==='low'&&!t.done&&hideAssignedAway(t));
+  else if(curView==='in_progress')list=list.filter(t=>t.status==='in_progress'&&hideAssignedAway(t));
+  else if(curView==='stuck')list=list.filter(t=>t.status==='stuck'&&hideAssignedAway(t));
+  else if(curView==='completed')list=list.filter(t=>t.done&&hideAssignedAway(t));
+  else if(curView==='inbox')list=list.filter(t=>isAssignedToMe(t)&&!t.done);
+  else if(curView==='assigned')list=list.filter(t=>isAssignedAwayByMe(t));
+  else if(curView.startsWith('space_')){const sn=curView.slice(6).toLowerCase();list=list.filter(t=>(t.group_name||'').toLowerCase()===sn&&!t.done&&hideAssignedAway(t));}
   if(filterMode==='no_due')list=list.filter(t=>!t.due_date&&!t.done);
   else if(filterMode!=='all')list=list.filter(t=>t.priority===filterMode&&!t.done);
   if(searchQ){
@@ -1184,6 +1252,7 @@ function renderTaskRow(t){
     </div>
 
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      ${assignChip(t)}
       <div class="due-wrap">
         <div class="due-chip ${dueClass}" onclick="openDuePicker('${t.id}',this)">${esc(dueLabel)}</div>
         <input type="date" class="due-input-inline" id="dp-${t.id}" value="${t.due_date?t.due_date.slice(0,10):''}"
@@ -1369,6 +1438,28 @@ function openPanel(id){
   document.getElementById('panelDue').value=t.due_date?t.due_date.slice(0,10):'';
   document.getElementById('panelNotes').value=t.notes||'';
   document.getElementById('panelGroup').value=t.group_name||'General';
+  // Populate Assigned-to picker
+  const sel=document.getElementById('panelAssignedTo');
+  const others=profiles.filter(p=>p.id!==t.user_id);
+  sel.innerHTML='<option value="">— Not assigned</option>'+
+    others.map(p=>`<option value="${p.id}">${esc(userDisplay(p))}</option>`).join('');
+  sel.value=t.assigned_to||'';
+  // Hint text + disable logic if I'm not the owner
+  const hint=document.getElementById('panelAssignedHint');
+  const iAmOwner=user&&t.user_id===user.id;
+  if(!iAmOwner&&t.assigned_to===user.id){
+    hint.textContent=`Assigned to you by ${userDisplayById(t.user_id)}. You can reassign or pass it back.`;
+    hint.style.display='block';
+  } else if(iAmOwner&&t.assigned_to&&t.assigned_to!==user.id){
+    hint.textContent=`Currently with ${userDisplayById(t.assigned_to)}. Clear to pull back into your list.`;
+    hint.style.display='block';
+  } else {
+    hint.style.display='none';
+  }
+  // Dismiss unseen-completion alert when owner opens
+  if(iAmOwner&&t.done&&t.assignee_seen===false){
+    updateTodo(id,{assignee_seen:true});
+  }
   document.getElementById('panelOverlay').classList.add('open');
 }
 function closePanel(){
@@ -1382,7 +1473,7 @@ async function savePanel(){
   if(!panelId)return;
   const pre=todos.find(t=>t.id===panelId);
   const snap=pre?{text:pre.text,status:pre.status,done:pre.done,priority:pre.priority,
-    start_date:pre.start_date,due_date:pre.due_date,notes:pre.notes,group_name:pre.group_name,completed_at:pre.completed_at}:null;
+    start_date:pre.start_date,due_date:pre.due_date,notes:pre.notes,group_name:pre.group_name,completed_at:pre.completed_at,assigned_to:pre.assigned_to}:null;
   const status=document.getElementById('panelStatus').value;
   const txt=document.getElementById('panelTitle').value.trim()||'Untitled';
   const patch={
@@ -1392,6 +1483,7 @@ async function savePanel(){
     due_date:document.getElementById('panelDue').value?document.getElementById('panelDue').value.slice(0,10):null,
     notes:document.getElementById('panelNotes').value||null,
     group_name:document.getElementById('panelGroup').value||'General',
+    assigned_to:document.getElementById('panelAssignedTo').value||null,
     completed_at:status==='done'?new Date().toISOString():null,
   };
   await updateTodo(panelId,patch);
@@ -1542,7 +1634,7 @@ function parseNotes(raw){
 }
 
 // ── UI CONTROLS ──────────────────────────────────────────────────
-const viewTitles={all:'All Tasks',events:'Events',personal:'Personal',work:'Work',settings:'Settings',today:'Today',upcoming:'Upcoming',overdue:'Overdue',projects:'Projects',
+const viewTitles={all:'All Tasks',events:'Events',personal:'Personal',work:'Work',settings:'Settings',today:'Today',upcoming:'Upcoming',overdue:'Overdue',projects:'Projects',inbox:'Inbox',assigned:'Assigned',
   urgent:'Urgent Priority',high:'High Priority',medium:'Medium Priority',low:'Low Priority',
   in_progress:'In Progress',stuck:'Stuck',completed:'Completed'};
 function setView(el){
@@ -1569,6 +1661,10 @@ function setView(el){
   } else if(curView==='projects'){
     hideAll();
     document.getElementById('projView').style.display='block';
+    render();
+  } else if(curView==='inbox'||curView==='assigned'){
+    hideAll();
+    document.getElementById('listView').style.display='block';
     render();
   } else {
     hideAll();
