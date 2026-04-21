@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Brainbox To Do</title>
+<title>Brainbox Candy · Focal</title>
 <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -14,6 +14,7 @@
   --text:#1c1b18;--text2:#6b6860;--text3:#a09d95;
   --accent:#e8571a;--accent-soft:rgba(232,87,26,0.1);
   --urgent:#dc2626;--urgent-bg:#fef2f2;--urgent-border:#fecaca;
+  --bbc-pink:#ec008c;
   --high:#d97706;--high-bg:#fffbeb;--high-border:#fde68a;
   --medium:#2563eb;--medium-bg:#eff6ff;--medium-border:#bfdbfe;
   --low:#16a34a;--low-bg:#f0fdf4;--low-border:#bbf7d0;
@@ -38,7 +39,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .auth-logo em{color:var(--accent);font-style:normal}
 .auth-brand{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px}
 .auth-brand-img{height:78px;width:auto;flex-shrink:0}
-.auth-brand-tag{background:var(--accent);color:#fff;padding:5px 12px;border-radius:7px;font-family:var(--fh);font-size:17px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.auth-brand-tag{background:var(--bbc-pink);color:#fff;padding:5px 12px;border-radius:7px;font-family:var(--fh);font-size:17px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
 .auth-sub{color:var(--text2);font-size:13px;margin-bottom:32px}
 .auth-tabs{display:flex;background:var(--surface2);border-radius:8px;padding:3px;gap:3px;margin-bottom:22px}
 .auth-tab{flex:1;border:none;background:transparent;border-radius:6px;padding:8px;font-family:var(--fb);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s}
@@ -61,7 +62,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .sb-logo{font-family:var(--fh);font-size:1rem;font-weight:800;display:flex;align-items:center;gap:9px}
 .sb-logo-mark{width:26px;height:26px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;flex-shrink:0}
 .sb-logo-img{height:38px;width:auto;flex-shrink:0}
-.sb-logo-tag{background:var(--accent);color:#fff;padding:2px 8px;border-radius:5px;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.sb-logo-tag{background:var(--bbc-pink);color:#fff;padding:2px 8px;border-radius:5px;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .sb-sync{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px;margin-top:4px}
 .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .3s;flex-shrink:0}
 .sync-dot.live{background:#16a34a;box-shadow:0 0 5px #16a34a}
@@ -442,6 +443,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .add-space-input:focus{border-color:var(--accent)}
 .add-space-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;white-space:nowrap}
 .add-space-btn:hover{opacity:.88}
+.toggle{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:24px;transition:background .2s}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-slider{background:var(--accent)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px)}
 .space-colour-pick{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .sc-swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s;flex-shrink:0}
 .sc-swatch.sel{border-color:var(--text);transform:scale(1.2)}
@@ -467,7 +474,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
   <div class="auth-card">
     <div class="auth-brand">
       <img src="logo.jpg" alt="Brainbox Candy" class="auth-brand-img">
-      <span class="auth-brand-tag">To Do</span>
+      <span class="auth-brand-tag">Focal</span>
     </div>
     <div class="auth-sub">The Brainbox Candy task manager</div>
     <div class="auth-tabs">
@@ -490,7 +497,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 <div id="appShell" class="shell" style="display:none">
   <aside class="sidebar" id="sidebar">
     <div class="sb-head">
-      <div class="sb-logo"><img src="logo.jpg" alt="Brainbox Candy" class="sb-logo-img"><span class="sb-logo-tag">To Do</span></div>
+      <div class="sb-logo"><img src="logo.jpg" alt="Brainbox Candy" class="sb-logo-img"><span class="sb-logo-tag">Focal</span></div>
       <div class="sb-sync"><div class="sync-dot" id="syncDot"></div><span id="syncLabel">connecting…</span></div>
     </div>
     <div class="sb-sec">
@@ -597,18 +604,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
     </div>
 
     <div class="toolbar">
-      <span style="font-size:12px;font-weight:600;color:var(--text2)">Sort:</span>
-      <select class="sort-select" id="sortSel" onchange="onSort()">
-        <option value="manual">✋ Manual Order</option>
-        <option value="smart">🧠 Smart</option>
-        <option value="priority" selected>🔴 Priority</option>
-        <option value="due">📅 Due Date</option>
-        <option value="status">📊 Status</option>
-        <option value="created">🕐 Created</option>
-        <option value="alpha">🔤 A–Z</option>
-        <option value="group">📁 Group</option>
-      </select>
-      <div style="width:1px;height:18px;background:var(--border);flex-shrink:0"></div>
+      <div id="sortToolbarBit" style="display:none;align-items:center;gap:8px">
+        <span style="font-size:12px;font-weight:600;color:var(--text2)">Sort:</span>
+        <select class="sort-select" id="sortSel" onchange="onSort()">
+          <option value="manual">✋ Manual Order</option>
+          <option value="smart" selected>🧠 Smart</option>
+          <option value="priority">🔴 Priority</option>
+          <option value="due">📅 Due Date</option>
+          <option value="status">📊 Status</option>
+          <option value="created">🕐 Created</option>
+          <option value="alpha">🔤 A–Z</option>
+          <option value="group">📁 Group</option>
+        </select>
+        <div style="width:1px;height:18px;background:var(--border);flex-shrink:0"></div>
+      </div>
       <div class="filter-pills">
         <button class="pill active" data-f="all" onclick="onFilter(this)">All</button>
         <button class="pill pu" data-f="urgent" onclick="onFilter(this)">🔴 Urgent</button>
@@ -818,10 +827,10 @@ const {createClient}=supabase;
 const sb=createClient(SB_URL,SB_KEY);
 
 let todos=[],user=null,isSignUp=false;
-let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='';
+let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='';
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.7.0';
+const APP_VERSION='1.7.1';
 const APP_BUILD='2026-04-21';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1690,7 +1699,7 @@ function renderSettings(){
       <div class="settings-section-head">
         <div>
           <div class="settings-section-title">Display</div>
-          <div class="settings-section-sub">Adjust text size to your preference</div>
+          <div class="settings-section-sub">Text size and interface preferences</div>
         </div>
       </div>
       <div class="space-row" style="flex-wrap:wrap;gap:10px">
@@ -1700,6 +1709,13 @@ function renderSettings(){
           <button onclick="setFontSize('medium')" id="fs-medium" class="add-space-btn" style="font-size:13px;padding:5px 12px">A Medium</button>
           <button onclick="setFontSize('large')" id="fs-large" class="add-space-btn" style="background:var(--surface2);color:var(--text);border:1.5px solid var(--border);font-size:15px;padding:5px 12px">A Large</button>
         </div>
+      </div>
+      <div class="space-row" style="flex-wrap:wrap;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div class="space-name" style="font-size:13px;color:var(--text2)">Show sort options</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Reveal the Sort dropdown above the task list. Hidden by default — app sorts by Smart (priority + urgency) automatically.</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="showSortToggle" ${localStorage.getItem('showSortToolbar')==='1'?'checked':''} onchange="toggleSortToolbar(this.checked)"><span class="toggle-slider"></span></label>
       </div>
     </div>
 
@@ -1988,6 +2004,19 @@ function setFontSize(size){
       document.documentElement.style.setProperty('--task-fs',s.task);
       document.documentElement.style.setProperty('--ui-fs',s.ui);
     }
+  }
+})();
+
+// Show / hide the sort-options toolbar group
+function toggleSortToolbar(show){
+  const el=document.getElementById('sortToolbarBit');
+  if(el)el.style.display=show?'flex':'none';
+  localStorage.setItem('showSortToolbar',show?'1':'0');
+}
+(function(){
+  if(localStorage.getItem('showSortToolbar')==='1'){
+    const el=document.getElementById('sortToolbarBit');
+    if(el)el.style.display='flex';
   }
 })();
 

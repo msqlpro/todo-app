@@ -2,6 +2,12 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.7.1 — 2026-04-21
+
+- Brand pill text changed from "TO DO" back to **"FOCAL"**, and recoloured to the Brainbox Candy pink (`#ec008c`) instead of amber. App name is now "Brainbox Candy · Focal" in the browser tab.
+- Default sort switched from Priority to **Smart** (priority × 2, minus 20 if overdue, minus 8 if due soon). With no tasks dated today, Smart behaves exactly like Priority — so this is a silent upgrade that starts paying off once due dates get added.
+- Sort dropdown hidden from the toolbar by default. New **"Show sort options"** toggle added to Settings → Display. When enabled, the dropdown reappears. State persists per device in localStorage.
+
 ## v1.7.0 — 2026-04-21
 
 - Rebranded from **Focal** to **Brainbox To Do**. Uses the real Brainbox Candy logo on the auth screen and in the sidebar, bundled locally in the repo (`logo.jpg`) so no external CDN dependency. Page title, auth subtitle, README and all docs updated.
