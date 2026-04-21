@@ -39,6 +39,12 @@ Stored per device in `localStorage`:
 
 `APP_VERSION` and `APP_BUILD` constants near the top of the script control the version pill in the dashboard. Bumped on every meaningful change using [semver](https://semver.org/) (patch / minor / major). See [CHANGELOG.md](CHANGELOG.md).
 
+## Feature specs
+
+Larger features are scoped in advance before any code is written. Current specs:
+
+- [docs/assignment.md](docs/assignment.md) — task assignment between users (target v1.8.0)
+
 ## Deploying a change
 
 1. Edit `index.html`.
