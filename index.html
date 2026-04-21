@@ -236,6 +236,48 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .cal-task-pip{font-size:10px;border-radius:4px;padding:1px 5px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;cursor:pointer}
 .cal-more{font-size:10px;color:var(--text3);font-weight:600}
 
+/* PROJECTS / GANTT */
+.proj-wrap{padding:16px 20px;flex:1;overflow:auto}
+.proj-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.proj-title{font-family:var(--fh);font-size:.95rem;font-weight:700;color:var(--text2);flex:1;min-width:140px}
+.proj-zoom{display:inline-flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden}
+.proj-zoom button{background:var(--surface);border:none;padding:5px 11px;font-family:var(--fb);font-size:12px;color:var(--text2);cursor:pointer;transition:all .15s}
+.proj-zoom button:not(:last-child){border-right:1.5px solid var(--border)}
+.proj-zoom button:hover{background:var(--surface2)}
+.proj-zoom button.active{background:var(--accent);color:#fff}
+.proj-nav{display:inline-flex;gap:6px}
+.proj-nav-btn{border:1.5px solid var(--border);border-radius:7px;background:var(--surface);padding:5px 10px;cursor:pointer;color:var(--text2);font-size:12px;transition:all .15s}
+.proj-nav-btn:hover{background:var(--surface2)}
+.proj-range{font-size:12px;color:var(--text2);font-weight:500;min-width:150px;text-align:center}
+.gantt{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);position:relative}
+.gantt-row{display:grid;grid-template-columns:200px 1fr;border-bottom:1px solid var(--border);min-height:40px}
+.gantt-row:last-child{border-bottom:none}
+.gantt-row.header{background:var(--surface2);position:sticky;top:0;z-index:5}
+.gantt-label{padding:9px 12px;display:flex;align-items:center;gap:8px;font-size:13px;border-right:1px solid var(--border);overflow:hidden;cursor:pointer;transition:background .15s}
+.gantt-label:hover{background:var(--surface2)}
+.gantt-row.header .gantt-label{font-size:11px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:default;background:var(--surface2)}
+.gantt-row.header .gantt-label:hover{background:var(--surface2)}
+.gantt-label-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.gantt-label-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gantt-track{position:relative;min-height:40px}
+.gantt-headcols{display:flex;font-size:11px;color:var(--text2);font-weight:600;height:100%}
+.gantt-headcell{flex:1;padding:10px 8px;border-right:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gantt-headcell:last-child{border-right:none}
+.gantt-headcell.today-col{color:var(--accent);background:var(--accent-light,#fef3c7)}
+.gantt-grid{position:absolute;inset:0;display:flex;pointer-events:none}
+.gantt-gridcell{flex:1;border-right:1px solid var(--border)}
+.gantt-gridcell:last-child{border-right:none}
+.gantt-today{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:3;pointer-events:none}
+.gantt-bar{position:absolute;top:8px;height:24px;border-radius:5px;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;z-index:2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:1px solid;transition:filter .15s,transform .1s}
+.gantt-bar:hover{filter:brightness(.96);transform:translateY(-1px)}
+.gantt-bar.p-urgent{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.gantt-bar.p-high{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+.gantt-bar.p-medium{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+.gantt-bar.p-low{background:#f0fdf4;border-color:#bbf7d0;color:#166534}
+.gantt-bar.p-none{background:var(--surface2);border-color:var(--border2);color:var(--text2)}
+.gantt-bar.overdue{filter:saturate(1.3);outline:2px solid var(--urgent);outline-offset:-1px}
+.gantt-empty{padding:40px 20px;text-align:center;color:var(--text2);font-size:13px}
+
 /* DETAIL PANEL - fixed right slide-in */
 .panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s}
 .panel-overlay.open{opacity:1;pointer-events:all}
@@ -460,6 +502,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 1a6 6 0 1 0 0 12A6 6 0 0 0 7 1zM7 3a4 4 0 1 1 0 8A4 4 0 0 1 7 3zm-.5 2v3l2.5 1.25.5-.87-2-1V5H6.5z"/></svg>
         Overdue<span class="sb-badge" id="c-overdue" style="color:var(--urgent)">0</span>
       </button>
+      <button class="sb-btn" data-view="projects" onclick="setView(this)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="2" width="8" height="2" rx="1"/><rect x="3" y="6" width="9" height="2" rx="1"/><rect x="1" y="10" width="6" height="2" rx="1"/></svg>
+        Projects<span class="sb-badge" id="c-projects">0</span>
+      </button>
     </div>
     <div class="sb-divider"></div>
     <div class="sb-sec">
@@ -568,6 +614,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
     <div id="listView" class="content"></div>
     <div id="boardView" class="board-wrap" style="display:none"></div>
     <div id="calView" class="cal-wrap" style="display:none"></div>
+    <div id="projView" class="proj-wrap" style="display:none"></div>
     <div id="eventsView" class="events-wrap" style="display:none"></div>
     <div id="settingsView" class="settings-wrap" style="display:none"></div>
   </div>
@@ -591,7 +638,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <option value="stuck">Stuck</option>
         <option value="done">Done</option>
       </select>
-      <input class="qm-date" type="date" id="qmDue">
+      <input class="qm-date" type="date" id="qmStart" title="Start date (fill both Start and Due to show in Projects)" placeholder="Start">
+      <input class="qm-date" type="date" id="qmDue" title="Due date">
       <select class="qm-sel" id="qmGroup">
         <option value="Personal">Personal</option>
         <option value="Work">Work</option>
@@ -658,6 +706,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
           <option value="medium">🔵 Medium</option>
           <option value="low">🟢 Low</option>
         </select>
+      </div>
+
+      <div class="panel-field">
+        <span class="panel-field-label">Start Date</span>
+        <input class="panel-date-input" type="date" id="panelStart">
       </div>
 
       <div class="panel-field">
@@ -758,8 +811,8 @@ let todos=[],user=null,isSignUp=false;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='';
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.5.0';
-const APP_BUILD='2026-04-19';
+const APP_VERSION='1.6.0';
+const APP_BUILD='2026-04-21';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
 let importLines=[];
@@ -836,7 +889,9 @@ async function loadTodos(){
 }
 async function addTodo(f){
   const row={text:f.text.trim(),done:false,user_id:user.id,priority:f.priority||'none',
-    status:f.status||'not_started',due_date:f.due_date?f.due_date.slice(0,10):null,notes:f.notes||null,
+    status:f.status||'not_started',
+    start_date:f.start_date?f.start_date.slice(0,10):null,
+    due_date:f.due_date?f.due_date.slice(0,10):null,notes:f.notes||null,
     group_name:f.group_name||'General',sort_order:todos.length};
   const {data,error}=await sb.from('todos').insert(row).select().single();
   if(error){toast('Error: '+error.message);console.error(error);return;}
@@ -961,6 +1016,7 @@ function updateCounts(){
   set('c-today',todos.filter(t=>isDueToday(t)&&!t.done).length);
   set('c-upcoming',todos.filter(t=>{if(!t.due_date||t.done)return false;return t.due_date.slice(0,10)>today();}).length);
   set('c-overdue',todos.filter(isOverdue).length);
+  set('c-projects',todos.filter(t=>t.start_date&&t.due_date&&!t.done).length);
   set('c-urgent',active.filter(t=>t.priority==='urgent').length);
   set('c-high',active.filter(t=>t.priority==='high').length);
   set('c-medium',active.filter(t=>t.priority==='medium').length);
@@ -987,6 +1043,7 @@ function getFiltered(){
   else if(curView==='today')list=list.filter(t=>isDueToday(t)&&!t.done);
   else if(curView==='upcoming')list=list.filter(t=>t.due_date&&t.due_date.slice(0,10)>today()&&!t.done);
   else if(curView==='overdue')list=list.filter(isOverdue);
+  else if(curView==='projects')list=list.filter(t=>t.start_date&&t.due_date&&!t.done);
   else if(curView==='urgent')list=list.filter(t=>t.priority==='urgent'&&!t.done);
   else if(curView==='high')list=list.filter(t=>t.priority==='high'&&!t.done);
   else if(curView==='medium')list=list.filter(t=>t.priority==='medium'&&!t.done);
@@ -1023,6 +1080,7 @@ function getFiltered(){
 
 // ── RENDER ──────────────────────────────────────────────────────
 function render(){
+  if(curView==='projects'){renderProjects();return;}
   if(dispMode==='list')renderList();
   else if(dispMode==='board')renderBoard();
   else renderCalendar();
@@ -1177,6 +1235,85 @@ function renderCalendar(){
   </div>`;
 }
 
+// ── PROJECTS / GANTT ────────────────────────────────────────────
+function renderProjects(){
+  const el=document.getElementById('projView');
+  const list=todos.filter(t=>t.start_date&&t.due_date&&!t.done);
+  if(!list.length){
+    el.innerHTML='<div class="proj-head"><div class="proj-title">Projects Timeline</div></div><div class="gantt"><div class="gantt-empty">No projects yet.<br><br>Tasks with <b>both</b> a Start Date and a Due Date will appear here as a timeline.</div></div>';
+    return;
+  }
+  list.sort((a,b)=>{
+    const d=a.start_date.localeCompare(b.start_date);
+    if(d)return d;
+    return(PRI[a.priority]??4)-(PRI[b.priority]??4);
+  });
+  const MS=86400000;
+  const toMs=s=>new Date(s+'T00:00:00').getTime();
+  const todayMs=toMs(today());
+  let minMs=Infinity,maxMs=-Infinity;
+  list.forEach(t=>{minMs=Math.min(minMs,toMs(t.start_date));maxMs=Math.max(maxMs,toMs(t.due_date));});
+  minMs=Math.min(minMs,todayMs);
+  maxMs=Math.max(maxMs,todayMs);
+  const sDow=new Date(minMs).getDay();
+  const sBack=sDow===0?6:sDow-1;
+  const eDow=new Date(maxMs).getDay();
+  const eFwd=eDow===0?0:7-eDow;
+  const rStart=minMs-sBack*MS;
+  const rEnd=maxMs+eFwd*MS+MS;
+  const totalMs=rEnd-rStart;
+  const totalWeeks=Math.round(totalMs/(7*MS));
+  const compact=totalWeeks>12;
+  let headCells='';
+  for(let i=0;i<totalWeeks;i++){
+    const d=new Date(rStart+i*7*MS);
+    const label=compact
+      ?d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})
+      :d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    headCells+=`<div class="gantt-headcell">${label}</div>`;
+  }
+  let gridCells='';
+  for(let i=0;i<totalWeeks;i++)gridCells+='<div class="gantt-gridcell"></div>';
+  const todayPct=((todayMs+MS/2-rStart)/totalMs)*100;
+  const rows=list.map(t=>{
+    const s=toMs(t.start_date),e=toMs(t.due_date);
+    const left=((s-rStart)/totalMs)*100;
+    const width=((e-s+MS)/totalMs)*100;
+    const pri=t.priority||'none';
+    const over=isOverdue(t)?' overdue':'';
+    const sFmt=new Date(s).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    const eFmt=new Date(e).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    const tStr=esc(t.text);
+    return `<div class="gantt-row">
+      <div class="gantt-label" onclick="openPanel('${t.id}')">
+        <span class="gantt-label-dot" style="background:${priColor(pri)}"></span>
+        <span class="gantt-label-text">${tStr}</span>
+      </div>
+      <div class="gantt-track">
+        <div class="gantt-grid">${gridCells}</div>
+        <div class="gantt-today" style="left:${todayPct}%"></div>
+        <div class="gantt-bar p-${pri}${over}" style="left:${left}%;width:${width}%" onclick="event.stopPropagation();openPanel('${t.id}')" title="${tStr} · ${sFmt} → ${eFmt}">${tStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+  const minWidth=Math.max(600,totalWeeks*80);
+  el.innerHTML=`
+    <div class="proj-head">
+      <div class="proj-title">Projects Timeline — ${list.length} active</div>
+      <div class="proj-range">${new Date(rStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})} – ${new Date(rEnd-MS).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+    </div>
+    <div class="gantt" style="min-width:${minWidth}px">
+      <div class="gantt-row header">
+        <div class="gantt-label">Task</div>
+        <div class="gantt-track">
+          <div class="gantt-headcols">${headCells}</div>
+          <div class="gantt-today" style="left:${todayPct}%"></div>
+        </div>
+      </div>
+      ${rows}
+    </div>`;
+}
+
 // ── PANEL ───────────────────────────────────────────────────────
 function openPanel(id){
   closeAllDropdowns();
@@ -1186,6 +1323,7 @@ function openPanel(id){
   document.getElementById('panelTitle').value=t.text;
   document.getElementById('panelStatus').value=t.status||'not_started';
   document.getElementById('panelPriority').value=t.priority||'none';
+  document.getElementById('panelStart').value=t.start_date?t.start_date.slice(0,10):'';
   document.getElementById('panelDue').value=t.due_date?t.due_date.slice(0,10):'';
   document.getElementById('panelNotes').value=t.notes||'';
   document.getElementById('panelGroup').value=t.group_name||'General';
@@ -1202,12 +1340,13 @@ async function savePanel(){
   if(!panelId)return;
   const pre=todos.find(t=>t.id===panelId);
   const snap=pre?{text:pre.text,status:pre.status,done:pre.done,priority:pre.priority,
-    due_date:pre.due_date,notes:pre.notes,group_name:pre.group_name,completed_at:pre.completed_at}:null;
+    start_date:pre.start_date,due_date:pre.due_date,notes:pre.notes,group_name:pre.group_name,completed_at:pre.completed_at}:null;
   const status=document.getElementById('panelStatus').value;
   const txt=document.getElementById('panelTitle').value.trim()||'Untitled';
   const patch={
     text:txt,status,done:status==='done',
     priority:document.getElementById('panelPriority').value,
+    start_date:document.getElementById('panelStart').value?document.getElementById('panelStart').value.slice(0,10):null,
     due_date:document.getElementById('panelDue').value?document.getElementById('panelDue').value.slice(0,10):null,
     notes:document.getElementById('panelNotes').value||null,
     group_name:document.getElementById('panelGroup').value||'General',
@@ -1293,6 +1432,7 @@ function openQuickAdd(group='',status='not_started',due=''){
   document.getElementById('qmTitle').value='';
   document.getElementById('qmPri').value='none';
   document.getElementById('qmStat').value=status||'not_started';
+  document.getElementById('qmStart').value='';
   document.getElementById('qmDue').value=due||'';
   document.getElementById('qmGroup').value=group||'';
   document.getElementById('quickModal').classList.add('open');
@@ -1305,6 +1445,7 @@ async function submitQuickAdd(){
   if(!txt)return;
   await addTodo({text:txt,priority:document.getElementById('qmPri').value,
     status:document.getElementById('qmStat').value,
+    start_date:document.getElementById('qmStart').value||null,
     due_date:document.getElementById('qmDue').value||null,
     group_name:document.getElementById('qmGroup').value||'General'});
   closeQuickAdd();
@@ -1355,7 +1496,7 @@ function parseNotes(raw){
 }
 
 // ── UI CONTROLS ──────────────────────────────────────────────────
-const viewTitles={all:'All Tasks',events:'Events',personal:'Personal',work:'Work',settings:'Settings',today:'Today',upcoming:'Upcoming',overdue:'Overdue',
+const viewTitles={all:'All Tasks',events:'Events',personal:'Personal',work:'Work',settings:'Settings',today:'Today',upcoming:'Upcoming',overdue:'Overdue',projects:'Projects',
   urgent:'Urgent Priority',high:'High Priority',medium:'Medium Priority',
   in_progress:'In Progress',stuck:'Stuck',completed:'Completed'};
 function setView(el){
@@ -1363,22 +1504,28 @@ function setView(el){
   el.classList.add('active');
   curView=el.dataset.view;
   document.getElementById('topbarTitle').textContent=curView.startsWith('space_')?curView.slice(6):(viewTitles[curView]||'Tasks');
-  if(curView==='settings'){
+  const hideAll=()=>{
     document.getElementById('listView').style.display='none';
     document.getElementById('boardView').style.display='none';
     document.getElementById('calView').style.display='none';
+    document.getElementById('projView').style.display='none';
     document.getElementById('eventsView').style.display='none';
+    document.getElementById('settingsView').style.display='none';
+  };
+  if(curView==='settings'){
+    hideAll();
     document.getElementById('settingsView').style.display='block';
     renderSettings();
   } else if(curView==='events'){
-    document.getElementById('listView').style.display='none';
-    document.getElementById('boardView').style.display='none';
-    document.getElementById('calView').style.display='none';
+    hideAll();
     document.getElementById('eventsView').style.display='block';
     renderEvents();
+  } else if(curView==='projects'){
+    hideAll();
+    document.getElementById('projView').style.display='block';
+    render();
   } else {
-    document.getElementById('eventsView').style.display='none';
-    document.getElementById('settingsView').style.display='none';
+    hideAll();
     document.getElementById('listView').style.display=dispMode==='list'?'block':'none';
     document.getElementById('boardView').style.display=dispMode==='board'?'block':'none';
     document.getElementById('calView').style.display=dispMode==='calendar'?'block':'none';
@@ -1390,6 +1537,7 @@ function setDisplayMode(m){
   document.getElementById('listView').style.display=m==='list'?'block':'none';
   document.getElementById('boardView').style.display=m==='board'?'block':'none';
   document.getElementById('calView').style.display=m==='calendar'?'block':'none';
+  document.getElementById('projView').style.display='none';
   document.getElementById('eventsView').style.display='none';
   ['List','Board','Cal'].forEach(v=>document.getElementById('vb'+v).classList.remove('active'));
   const map={list:'List',board:'Board',calendar:'Cal'};
