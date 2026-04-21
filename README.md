@@ -1,6 +1,6 @@
-# Focal
+# Brainbox To Do
 
-A personal task manager with Supabase sync, built as a single-file HTML app.
+A personal task manager with Supabase sync, built as a single-file HTML app for Brainbox Candy Ltd. Formerly known as Focal.
 Live at **https://msqlpro.github.io/todo-app/**.
 
 ## Features

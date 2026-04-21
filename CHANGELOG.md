@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.7.0 — 2026-04-21
+
+- Rebranded from **Focal** to **Brainbox To Do**. Uses the real Brainbox Candy logo on the auth screen and in the sidebar, bundled locally in the repo (`logo.jpg`) so no external CDN dependency. Page title, auth subtitle, README and all docs updated.
+
 ## v1.6.1 — 2026-04-21
 
 - Gantt bars thickened to 34px with 13px text; rows taller to match. Much easier to read.
