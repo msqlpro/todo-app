@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.18 — 2026-04-22
+
+- Fix: "Inc. done" search checkbox was leaking completed tasks from unrelated views. E.g. searching "thea" in the Assigned view with Inc. done ticked would re-add every done Thea-related task in the whole database — even personal tasks that had nothing to do with delegation. The re-add step now respects the current view's filter (owner, priority, group, etc.) so only completed items that genuinely belong to the view appear.
+
 ## v1.8.17 — 2026-04-22
 
 - Fix: after signing out, the Sign in button on the auth screen was stuck in a disabled "…" state and unresponsive. Cause: the submit handler showed the "…" label during sign-in, then `onAuthStateChange` swapped to the app shell before the button reset fired. On subsequent sign-out the auth screen came back with that stale state. `showAuth()` now resets the button, clears the password field, and hides any lingering error message.

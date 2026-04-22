@@ -875,7 +875,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.17';
+const APP_VERSION='1.8.18';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1223,8 +1223,30 @@ function getFiltered(){
     list=list.filter(t=>t.text.toLowerCase().includes(searchQ)||(t.notes||'').toLowerCase().includes(searchQ));
     if(searchIncDone){
       const existing=new Set(list.map(t=>t.id));
+      // Only re-add DONE items that would also pass the current view's own filter
+      // (except the done/!done check itself). Otherwise 'Inc. done' leaks completed
+      // items from unrelated views — e.g. showing done Personal tasks while viewing
+      // Assigned, because the search matched them.
+      const viewAllowsDone=t=>{
+        if(curView==='all')return true;
+        if(curView==='completed')return true;
+        if(curView==='today')return isDueToday(t);
+        if(curView==='upcoming')return t.due_date&&t.due_date.slice(0,10)>today();
+        if(curView==='overdue')return isOverdue(t);
+        if(curView==='projects')return t.start_date&&t.due_date;
+        if(curView==='urgent')return t.priority==='urgent';
+        if(curView==='high')return t.priority==='high';
+        if(curView==='medium')return t.priority==='medium';
+        if(curView==='low')return t.priority==='low';
+        if(curView==='in_progress')return t.status==='in_progress';
+        if(curView==='stuck')return t.status==='stuck';
+        if(curView==='inbox')return isAssignedToMe(t);
+        if(curView==='assigned')return isAssignedAwayByMe(t);
+        if(curView.startsWith('space_')){const sn=curView.slice(6).toLowerCase();return (t.group_name||'').toLowerCase()===sn;}
+        return true;
+      };
       todos.forEach(t=>{
-        if(t.done&&!existing.has(t.id)&&(t.text.toLowerCase().includes(searchQ)||(t.notes||'').toLowerCase().includes(searchQ))){
+        if(t.done&&!existing.has(t.id)&&viewAllowsDone(t)&&(t.text.toLowerCase().includes(searchQ)||(t.notes||'').toLowerCase().includes(searchQ))){
           list.push(t);
         }
       });
