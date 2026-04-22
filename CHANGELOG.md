@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.2 — 2026-04-22
+
+- Fix: Add Task button in the Quick Add modal unresponsive. The new Assign-to row (from v1.8.1) was missing its closing `</div>`, which swallowed the actions row and broke the button's click target. Closed the tag properly.
+
 ## v1.8.1 — 2026-04-22
 
 - Quick Add modal gains an **Assign to** picker on its own row, so a task can be assigned at creation instead of needing a round-trip through the edit panel. Default is "Me (keep)" — assignment is explicit opt-in. Toast confirms: *"Task added and assigned to Nicky ✓"* when used.

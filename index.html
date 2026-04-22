@@ -695,6 +695,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         Assign to
       </label>
       <select class="qm-sel" id="qmAssign" style="flex:1"></select>
+    </div>
     <div class="qm-actions">
       <button class="btn-cancel" onclick="closeQuickAdd()">Cancel</button>
       <button class="btn-add" onclick="submitQuickAdd()">Add Task</button>
@@ -863,7 +864,7 @@ let todos=[],profiles=[],user=null,isSignUp=false;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.1';
+const APP_VERSION='1.8.2';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
