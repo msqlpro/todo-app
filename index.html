@@ -865,7 +865,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.14';
+const APP_VERSION='1.8.15';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1183,7 +1183,7 @@ function getFiltered(){
   else if(curView==='stuck')list=list.filter(t=>t.status==='stuck'&&hideAssignedAway(t));
   else if(curView==='completed')list=list.filter(t=>t.done&&hideAssignedAway(t));
   else if(curView==='inbox')list=list.filter(t=>isAssignedToMe(t)&&!t.done);
-  else if(curView==='assigned')list=list.filter(t=>isAssignedAwayByMe(t));
+  else if(curView==='assigned')list=list.filter(t=>isAssignedAwayByMe(t)&&!t.done);
   else if(curView.startsWith('space_')){const sn=curView.slice(6).toLowerCase();list=list.filter(t=>(t.group_name||'').toLowerCase()===sn&&!t.done&&hideAssignedAway(t));}
   if(filterMode==='no_due')list=list.filter(t=>!t.due_date&&!t.done);
   else if(filterMode!=='all')list=list.filter(t=>t.priority===filterMode&&!t.done);

@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.15 — 2026-04-22
+
+- The **Assigned** view now excludes completed tasks. Previously it showed everything you'd ever assigned to someone — including long-finished items. The view is for current workload with others; completed assignments still appear in the Completed sidebar view if you need them.
+
 ## v1.8.14 — 2026-04-22
 
 - Assignment chips reworded for clarity. `→ Nicky` becomes **Assigned to Nicky**, `← Mark` becomes **From Mark**. Same colours, same click behaviour, clearer meaning at a glance — no arrows to decode.
