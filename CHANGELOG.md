@@ -2,6 +2,13 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.0 — 2026-04-22
+
+- **New: "Back from X" indicator.** When an assignee hands a task back to its owner (by picking the owner from the dropdown, which the spec treats as unassigning), the owner now sees a subtle amber chip on the task row reading **"Back from Nicky"** — so they know the work has returned to their plate rather than the task silently rejoining their main list. The chip has a ✕ for instant dismissal; opening the task panel also clears it automatically.
+- **Schema:** new `handed_back_by uuid` column on `public.todos` (nullable, references `auth.users`, ON DELETE SET NULL). Partial index `idx_todos_handed_back_by` on non-null values.
+- **RPC:** `reassign_todo()` updated — when the current assignee sets `assigned_to = NULL` on a task they don't own, it stamps `handed_back_by = caller`. Any other reassignment scenario clears the stamp, so the indicator is fresh and always reflects the most recent handback.
+- Chip auto-clears on: owner opening the task panel, owner clicking the ✕, subsequent reassignment of the task.
+
 ## v1.8.18 — 2026-04-22
 
 - Fix: "Inc. done" search checkbox was leaking completed tasks from unrelated views. E.g. searching "thea" in the Assigned view with Inc. done ticked would re-add every done Thea-related task in the whole database — even personal tasks that had nothing to do with delegation. The re-add step now respects the current view's filter (owner, priority, group, etc.) so only completed items that genuinely belong to the view appear.

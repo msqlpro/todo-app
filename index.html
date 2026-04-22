@@ -218,10 +218,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .task-row:hover .del-btn{opacity:1}
 .restore-btn{border:1.5px solid var(--s-done);background:transparent;color:var(--s-done);cursor:pointer;padding:3px 10px;border-radius:6px;font-family:var(--fb);font-size:11px;font-weight:700;flex-shrink:0;transition:all .15s;white-space:nowrap}
 .restore-btn:hover{background:var(--s-done-bg)}
-.assign-chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap;flex-shrink:0;letter-spacing:.01em}
+.assign-chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap;flex-shrink:0;letter-spacing:.01em;display:inline-flex;align-items:center;gap:4px}
 .assign-chip.out{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe}
 .assign-chip.in{background:#fdf2f8;color:#be185d;border:1px solid #fbcfe8}
 .assign-chip.unseen{background:var(--urgent-bg);color:var(--urgent);border-color:var(--urgent-border)}
+.assign-chip.back{background:#fffbeb;color:#b45309;border:1px solid #fde68a}
+.assign-chip .chip-x{border:none;background:transparent;color:inherit;padding:0 0 0 2px;margin-left:2px;font-size:13px;line-height:1;cursor:pointer;opacity:.6;font-weight:700}
+.assign-chip .chip-x:hover{opacity:1}
 .del-btn:hover{color:var(--urgent);background:var(--urgent-bg)}
 
 /* BOARD VIEW */
@@ -875,7 +878,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.18';
+const APP_VERSION='1.9.0';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1135,7 +1138,13 @@ function spClass(s){return{not_started:'sp-not',in_progress:'sp-prog',stuck:'sp-
 function spLabel(s){return{not_started:'Not Started',in_progress:'In Prog…',stuck:'Stuck',done:'Done'}[s]||'Not Started';}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function assignChip(t){
-  if(!t.assigned_to||!user)return '';
+  if(!user)return '';
+  // Owner seeing a task that was just handed back to them
+  if(t.user_id===user.id&&!t.assigned_to&&t.handed_back_by){
+    const who=esc(userDisplayById(t.handed_back_by));
+    return `<span class="assign-chip back" title="${who} handed this back to you — click ✕ to dismiss">Back from ${who}<button class="chip-x" onclick="event.stopPropagation();dismissHandback('${t.id}')" title="Dismiss">×</button></span>`;
+  }
+  if(!t.assigned_to)return '';
   if(t.user_id===user.id&&t.assigned_to!==user.id){
     const who=esc(userDisplayById(t.assigned_to));
     const unseen=t.done&&t.assignee_seen===false;
@@ -1146,6 +1155,9 @@ function assignChip(t){
     return `<span class="assign-chip in" title="Assigned to you by ${who}">From ${who}</span>`;
   }
   return '';
+}
+async function dismissHandback(id){
+  await updateTodo(id,{handed_back_by:null});
 }
 
 // ── COUNTS ──────────────────────────────────────────────────────
@@ -1554,6 +1566,10 @@ function openPanel(id){
   // Dismiss unseen-completion alert when owner opens
   if(iAmOwner&&t.done&&t.assignee_seen===false){
     updateTodo(id,{assignee_seen:true});
+  }
+  // Dismiss 'handed back' indicator when owner opens the task
+  if(iAmOwner&&t.handed_back_by){
+    updateTodo(id,{handed_back_by:null});
   }
   document.getElementById('panelOverlay').classList.add('open');
 }

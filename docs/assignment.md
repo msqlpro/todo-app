@@ -33,15 +33,16 @@ Regular UPDATEs work when the user retains RLS access after the write. But when 
 
 ## Data model changes
 
-Three new columns on `public.todos`:
+Columns on `public.todos`:
 
 | Column | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `assigned_to` | `uuid` | NULL | References `auth.users(id)`. NULL = unassigned. |
 | `assigned_at` | `timestamptz` | NULL | Set when `assigned_to` becomes non-NULL. NULL when unassigned. |
 | `assignee_seen` | `boolean` | `true` | Set to `false` when the assignee marks the task done. Cleared to `true` when the owner views or dismisses it. |
+| `handed_back_by` | `uuid` | NULL | Set by `reassign_todo()` when a non-owner assignee reassigns their task to NULL (handing it back to the owner). References `auth.users(id)` with `ON DELETE SET NULL`. Cleared by owner viewing the task, owner clicking the ✕ on the chip, or any subsequent reassignment. |
 
-Everything else unchanged. Existing tasks get `assigned_to=NULL`, `assigned_at=NULL`, `assignee_seen=true` — i.e. behave exactly as they do today.
+Everything else unchanged. Existing tasks get `assigned_to=NULL`, `assigned_at=NULL`, `assignee_seen=true`, `handed_back_by=NULL` — i.e. behave exactly as they do today.
 
 ## Assigner's experience
 
