@@ -329,6 +329,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .panel-notes{width:100%;min-height:100px;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--fb);font-size:13px;color:var(--text);background:var(--bg);outline:none;resize:vertical;transition:border-color .15s;line-height:1.6}
 .panel-notes:focus{border-color:var(--accent)}
 .panel-notes::placeholder{color:var(--text3)}
+.panel-history{border:1px solid var(--border);border-radius:8px;background:var(--bg);padding:8px 12px;max-height:200px;overflow-y:auto;font-size:12px}
+.panel-history-row{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px dashed var(--border);color:var(--text2);line-height:1.4}
+.panel-history-row:last-child{border-bottom:0}
+.panel-history-when{color:var(--text3);font-size:11px;white-space:nowrap;flex-shrink:0}
+.panel-history-what{flex:1}
+.panel-history-what b{color:var(--text);font-weight:600}
+.panel-history-empty{color:var(--text3);padding:6px 0;text-align:center;font-size:12px}
 .panel-group-input{border:1.5px solid var(--border);border-radius:8px;padding:8px 11px;font-family:var(--fb);font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;width:100%}
 .panel-group-input:focus{border-color:var(--accent)}
 .panel-save{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s}
@@ -807,6 +814,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <span class="panel-field-label">Notes</span>
         <textarea class="panel-notes" id="panelNotes" placeholder="Add notes, context, links…"></textarea>
       </div>
+
+      <div class="panel-field">
+        <span class="panel-field-label">History</span>
+        <div class="panel-history" id="panelHistory"><div class="panel-history-empty">Loading…</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -878,7 +890,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.0';
+const APP_VERSION='1.9.1';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1572,6 +1584,93 @@ function openPanel(id){
     updateTodo(id,{handed_back_by:null});
   }
   document.getElementById('panelOverlay').classList.add('open');
+  loadPanelHistory(id);
+}
+async function loadPanelHistory(todoId){
+  const box=document.getElementById('panelHistory');
+  if(!box)return;
+  box.innerHTML='<div class="panel-history-empty">Loading…</div>';
+  const {data,error}=await sb.from('todo_history')
+    .select('action,actor_id,from_user,to_user,created_at')
+    .eq('todo_id',todoId)
+    .order('created_at',{ascending:false})
+    .limit(50);
+  if(error){
+    box.innerHTML='<div class="panel-history-empty">Couldn\'t load history.</div>';
+    console.error(error);
+    return;
+  }
+  if(!data||!data.length){
+    box.innerHTML='<div class="panel-history-empty">No history yet.</div>';
+    return;
+  }
+  box.innerHTML=data.map(e=>renderHistoryRow(e)).join('');
+}
+function renderHistoryRow(e){
+  const who=id=>id?esc(userDisplayById(id)):'—';
+  const actor=who(e.actor_id);
+  const from=who(e.from_user);
+  const to=who(e.to_user);
+  let text='';
+  switch(e.action){
+    case 'created':     text=e.to_user?`<b>${actor}</b> created & assigned to <b>${to}</b>`:`<b>${actor}</b> created`; break;
+    case 'assigned':    text=`<b>${actor}</b> assigned to <b>${to}</b>`; break;
+    case 'reassigned':  text=`<b>${actor}</b> reassigned from <b>${from}</b> to <b>${to}</b>`; break;
+    case 'unassigned':  text=`<b>${actor}</b> unassigned (was with <b>${from}</b>)`; break;
+    case 'handed_back': text=`<b>${actor}</b> handed back`; break;
+    default:            text=e.action;
+  }
+  return `<div class="panel-history-row"><span class="panel-history-when">${fmtHistoryTime(e.created_at)}</span><span class="panel-history-what">${text}</span></div>`;
+}
+function fmtHistoryTime(iso){
+  const d=new Date(iso);
+  const now=new Date();
+  const diffMin=Math.floor((now-d)/60000);
+  if(diffMin<1)return 'just now';
+  if(diffMin<60)return diffMin+'m ago';
+  if(diffMin<1440)return Math.floor(diffMin/60)+'h ago';
+  const days=Math.floor(diffMin/1440);
+  if(days<7)return days+'d ago';
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+}
+async function loadActivityLog(){
+  const box=document.getElementById('activityLogBox');
+  if(!box)return;
+  box.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Loading…</div>';
+  // Pull 100 most-recent events the current user is allowed to see.
+  const {data,error}=await sb.from('todo_history')
+    .select('action,actor_id,from_user,to_user,task_text_snapshot,created_at,todo_id')
+    .order('created_at',{ascending:false})
+    .limit(100);
+  if(error){
+    box.innerHTML='<div style="padding:16px;text-align:center;color:var(--urgent);font-size:12px">'+esc(error.message)+'</div>';
+    return;
+  }
+  if(!data||!data.length){
+    box.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">No activity yet.</div>';
+    return;
+  }
+  const rows=data.map(e=>{
+    const who=id=>id?esc(userDisplayById(id)):'—';
+    const actor=who(e.actor_id);
+    const from=who(e.from_user);
+    const to=who(e.to_user);
+    const title=esc((e.task_text_snapshot||'').slice(0,70));
+    let what='';
+    switch(e.action){
+      case 'created':     what=e.to_user?`<b>${actor}</b> created & assigned to <b>${to}</b>`:`<b>${actor}</b> created`; break;
+      case 'assigned':    what=`<b>${actor}</b> assigned to <b>${to}</b>`; break;
+      case 'reassigned':  what=`<b>${actor}</b> reassigned from <b>${from}</b> to <b>${to}</b>`; break;
+      case 'unassigned':  what=`<b>${actor}</b> unassigned (was with <b>${from}</b>)`; break;
+      case 'handed_back': what=`<b>${actor}</b> handed back`; break;
+      default: what=e.action;
+    }
+    return `<div class="panel-history-row" style="padding:8px 16px">
+      <span class="panel-history-when">${fmtHistoryTime(e.created_at)}</span>
+      <span class="panel-history-what">${what}<div style="color:var(--text3);font-size:11px;margin-top:1px">“${title}”</div></span>
+    </div>`;
+  });
+  box.innerHTML=rows.join('');
 }
 function closePanel(){
   document.getElementById('panelOverlay').classList.remove('open');
@@ -1991,6 +2090,19 @@ function renderSettings(){
           <div style="font-size:11px;color:var(--text3);margin-top:2px">Reveal the Sort dropdown above the task list. Hidden by default — app sorts by Smart (priority + urgency) automatically.</div>
         </div>
         <label class="toggle"><input type="checkbox" id="showSortToggle" ${localStorage.getItem('showSortToolbar')==='1'?'checked':''} onchange="toggleSortToolbar(this.checked)"><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-head">
+        <div>
+          <div class="settings-section-title">Activity log</div>
+          <div class="settings-section-sub">Recent task assignments across all users</div>
+        </div>
+        <button class="add-space-btn" style="background:var(--surface2);color:var(--text2);padding:6px 12px;font-size:12px" onclick="loadActivityLog()">Refresh</button>
+      </div>
+      <div id="activityLogBox" style="padding:4px 0">
+        <div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Click Refresh to load recent activity.</div>
       </div>
     </div>
 

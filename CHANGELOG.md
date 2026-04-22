@@ -2,6 +2,14 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.1 — 2026-04-22
+
+- **New: Assignment history.** Every task now has a server-side audit trail of assignment events — created, assigned, reassigned, unassigned, handed back. Kept forever.
+- **Task panel:** new History section below Notes showing that task's assignment trail, newest first. "2h ago · Mark reassigned from Emma to Nicky" style.
+- **Settings → Activity log:** global feed of the 100 most recent assignment events you have access to. Each row shows when, who did what, and the task title. Refresh button to reload.
+- **Realtime fix:** the `todos` table was never added to the `supabase_realtime` publication, so the app's realtime subscription never received any events — every change required a page reload to see. Added the table to the publication. Changes now propagate to other tabs/users within ~1–2 seconds.
+- **DB:** new `public.todo_history` table with RLS (viewers see rows where they were actor/from/to, or where they own/are-assigned-to the current task). An AFTER INSERT/UPDATE trigger captures events automatically — no client-side logging means events can't be faked or missed.
+
 ## v1.9.0 — 2026-04-22
 
 - **New: "Back from X" indicator.** When an assignee hands a task back to its owner (by picking the owner from the dropdown, which the spec treats as unassigning), the owner now sees a subtle amber chip on the task row reading **"Back from Nicky"** — so they know the work has returned to their plate rather than the task silently rejoining their main list. The chip has a ✕ for instant dismissal; opening the task panel also clears it automatically.
