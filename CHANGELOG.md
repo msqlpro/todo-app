@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.3 — 2026-04-22
+
+- Fix: the v1.9.2 update banner was using `position:fixed` and overlapping the dashboard cards at the top of the page. Moved the banner inside the main content column as a regular in-flow block — it now pushes the topbar and content down naturally when visible, and scrolls away as you scroll through tasks. No more occlusion.
+
 ## v1.9.2 — 2026-04-22
 
 - **New: auto-update banner.** When a new version is deployed, open tabs now show a pink banner at the top reading *"A new version is available — click to refresh"*. Clicking it force-reloads with a cache-buster to fetch the latest build. Eliminates the need for users to know about Cmd+Shift+R when a fix goes live.
