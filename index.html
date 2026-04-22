@@ -862,7 +862,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.11';
+const APP_VERSION='1.8.12';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1514,6 +1514,35 @@ async function savePanel(){
   // Compute assigned_to with spec rule: "reassigning to the owner = unassigning"
   let newAssignedTo=document.getElementById('panelAssignedTo').value||null;
   if(newAssignedTo===pre.user_id)newAssignedTo=null;
+
+  // Special case: an assignee (non-owner) is changing the assigned_to field.
+  // After the update, the caller may no longer have RLS access to the row (e.g. Nicky
+  // hands a task back to Mark — she's neither owner nor assignee anymore). Postgres'
+  // UPDATE ... WITH CHECK blocks this even if we try to allow it in the policy, because
+  // of how Supabase/PostgREST issues the request. Route via a SECURITY DEFINER RPC.
+  const iAmOwner=user&&pre.user_id===user.id;
+  const assignedToChanged=newAssignedTo!==pre.assigned_to;
+  if(!iAmOwner&&assignedToChanged){
+    const {data:rpcData,error:rpcErr}=await sb.rpc('reassign_todo',{p_id:panelId,p_new_assigned_to:newAssignedTo});
+    if(rpcErr){
+      toast("Couldn't reassign: "+rpcErr.message);
+      console.error('reassign_todo failed',rpcErr);
+      return;
+    }
+    // Update local state. If we're no longer owner or assignee, drop from list.
+    const i=todos.findIndex(t=>t.id===panelId);
+    if(i!==-1){
+      todos[i]={...todos[i],...(rpcData||{assigned_to:newAssignedTo})};
+      const stillVisible=user&&(todos[i].user_id===user.id||todos[i].assigned_to===user.id);
+      if(!stillVisible)todos.splice(i,1);
+    }
+    updateCounts();render();
+    closePanel();
+    toast('Task reassigned ✓');
+    return;
+  }
+
+  // Normal path: owner editing their own task, or no assignment change
   const patch={
     text:txt,status,done:status==='done',
     priority:document.getElementById('panelPriority').value,
