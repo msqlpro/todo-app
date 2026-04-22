@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.1 — 2026-04-22
+
+- Quick Add modal gains an **Assign to** picker on its own row, so a task can be assigned at creation instead of needing a round-trip through the edit panel. Default is "Me (keep)" — assignment is explicit opt-in. Toast confirms: *"Task added and assigned to Nicky ✓"* when used.
+
 ## v1.8.0 — 2026-04-21
 
 Task assignment between users. Full spec at [docs/assignment.md](docs/assignment.md).

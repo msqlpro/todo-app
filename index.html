@@ -689,6 +689,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <option value="Health">Health</option>
       </select>
     </div>
+    <div class="qm-row" style="margin-top:-2px">
+      <label style="font-size:12px;color:var(--text2);font-weight:600;display:flex;align-items:center;gap:6px;white-space:nowrap">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="currentColor" style="opacity:.7"><path d="M7 1.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 10.5C3 8.6 5 7.5 7 7.5s4 1.1 4 3v1H3v-1z"/></svg>
+        Assign to
+      </label>
+      <select class="qm-sel" id="qmAssign" style="flex:1"></select>
     <div class="qm-actions">
       <button class="btn-cancel" onclick="closeQuickAdd()">Cancel</button>
       <button class="btn-add" onclick="submitQuickAdd()">Add Task</button>
@@ -857,8 +863,8 @@ let todos=[],profiles=[],user=null,isSignUp=false;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.0';
-const APP_BUILD='2026-04-21';
+const APP_VERSION='1.8.1';
+const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
 let importLines=[];
@@ -963,10 +969,16 @@ async function addTodo(f){
     status:f.status||'not_started',
     start_date:f.start_date?f.start_date.slice(0,10):null,
     due_date:f.due_date?f.due_date.slice(0,10):null,notes:f.notes||null,
-    group_name:f.group_name||'General',sort_order:todos.length};
+    group_name:f.group_name||'General',sort_order:todos.length,
+    assigned_to:f.assigned_to||null};
   const {data,error}=await sb.from('todos').insert(row).select().single();
   if(error){toast('Error: '+error.message);console.error(error);return;}
-  todos.push(data);updateCounts();render();toast('Task added ✓');
+  todos.push(data);updateCounts();render();
+  if(data.assigned_to&&data.assigned_to!==user.id){
+    toast('Task added and assigned to '+userDisplayById(data.assigned_to)+' ✓');
+  } else {
+    toast('Task added ✓');
+  }
 }
 async function updateTodo(id,fields){
   if(fields.status==='done'){fields.done=true;fields.completed_at=new Date().toISOString();}
@@ -1573,6 +1585,12 @@ function openQuickAdd(group='',status='not_started',due=''){
   document.getElementById('qmStart').value='';
   document.getElementById('qmDue').value=due||'';
   document.getElementById('qmGroup').value=group||'';
+  // Populate assign-to picker (default = nobody = task stays mine)
+  const sel=document.getElementById('qmAssign');
+  const others=profiles.filter(p=>user&&p.id!==user.id);
+  sel.innerHTML='<option value="">Me (keep)</option>'+
+    others.map(p=>`<option value="${p.id}">${esc(userDisplay(p))}</option>`).join('');
+  sel.value='';
   document.getElementById('quickModal').classList.add('open');
   setTimeout(()=>document.getElementById('qmTitle').focus(),60);
 }
@@ -1585,7 +1603,8 @@ async function submitQuickAdd(){
     status:document.getElementById('qmStat').value,
     start_date:document.getElementById('qmStart').value||null,
     due_date:document.getElementById('qmDue').value||null,
-    group_name:document.getElementById('qmGroup').value||'General'});
+    group_name:document.getElementById('qmGroup').value||'General',
+    assigned_to:document.getElementById('qmAssign').value||null});
   closeQuickAdd();
 }
 
