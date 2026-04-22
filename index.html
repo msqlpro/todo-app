@@ -864,7 +864,7 @@ let todos=[],profiles=[],user=null,isSignUp=false;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.2';
+const APP_VERSION='1.8.3';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -966,12 +966,14 @@ function checkAssignmentAlerts(){
   });
 }
 async function addTodo(f){
+  // Normalize: assigning a task to yourself is the same as not assigning.
+  const assignedTo=(f.assigned_to&&f.assigned_to!==user.id)?f.assigned_to:null;
   const row={text:f.text.trim(),done:false,user_id:user.id,priority:f.priority||'none',
     status:f.status||'not_started',
     start_date:f.start_date?f.start_date.slice(0,10):null,
     due_date:f.due_date?f.due_date.slice(0,10):null,notes:f.notes||null,
     group_name:f.group_name||'General',sort_order:todos.length,
-    assigned_to:f.assigned_to||null};
+    assigned_to:assignedTo};
   const {data,error}=await sb.from('todos').insert(row).select().single();
   if(error){toast('Error: '+error.message);console.error(error);return;}
   todos.push(data);updateCounts();render();
@@ -1451,17 +1453,23 @@ function openPanel(id){
   document.getElementById('panelDue').value=t.due_date?t.due_date.slice(0,10):'';
   document.getElementById('panelNotes').value=t.notes||'';
   document.getElementById('panelGroup').value=t.group_name||'General';
-  // Populate Assigned-to picker
+  // Populate Assigned-to picker — show every OTHER user, whether they own it or not.
+  // A viewer who is the assignee needs to be able to hand it back to the owner.
   const sel=document.getElementById('panelAssignedTo');
-  const others=profiles.filter(p=>p.id!==t.user_id);
-  sel.innerHTML='<option value="">— Not assigned</option>'+
-    others.map(p=>`<option value="${p.id}">${esc(userDisplay(p))}</option>`).join('');
-  sel.value=t.assigned_to||'';
-  // Hint text + disable logic if I'm not the owner
-  const hint=document.getElementById('panelAssignedHint');
   const iAmOwner=user&&t.user_id===user.id;
+  const pickable=profiles.filter(p=>user&&p.id!==user.id);
+  const ownerLabel=p=>p.id===t.user_id?' (owner)':'';
+  sel.innerHTML=(iAmOwner?'<option value="">— Not assigned</option>':'')+
+    pickable.map(p=>`<option value="${p.id}">${esc(userDisplay(p))}${ownerLabel(p)}</option>`).join('');
+  // If current value is me (the assignee) we display an implicit self row so the select isn't blank
   if(!iAmOwner&&t.assigned_to===user.id){
-    hint.textContent=`Assigned to you by ${userDisplayById(t.user_id)}. You can reassign or pass it back.`;
+    sel.insertAdjacentHTML('afterbegin',`<option value="${user.id}">${esc(userDisplay(userById(user.id)))} (me)</option>`);
+  }
+  sel.value=t.assigned_to||'';
+  // Hint text
+  const hint=document.getElementById('panelAssignedHint');
+  if(!iAmOwner&&t.assigned_to===user.id){
+    hint.textContent=`Assigned to you by ${userDisplayById(t.user_id)}. Pick their name to pass it back, or pick someone else to reassign.`;
     hint.style.display='block';
   } else if(iAmOwner&&t.assigned_to&&t.assigned_to!==user.id){
     hint.textContent=`Currently with ${userDisplayById(t.assigned_to)}. Clear to pull back into your list.`;
@@ -1489,6 +1497,9 @@ async function savePanel(){
     start_date:pre.start_date,due_date:pre.due_date,notes:pre.notes,group_name:pre.group_name,completed_at:pre.completed_at,assigned_to:pre.assigned_to}:null;
   const status=document.getElementById('panelStatus').value;
   const txt=document.getElementById('panelTitle').value.trim()||'Untitled';
+  // Compute assigned_to with spec rule: "reassigning to the owner = unassigning"
+  let newAssignedTo=document.getElementById('panelAssignedTo').value||null;
+  if(newAssignedTo===pre.user_id)newAssignedTo=null;
   const patch={
     text:txt,status,done:status==='done',
     priority:document.getElementById('panelPriority').value,
@@ -1496,7 +1507,7 @@ async function savePanel(){
     due_date:document.getElementById('panelDue').value?document.getElementById('panelDue').value.slice(0,10):null,
     notes:document.getElementById('panelNotes').value||null,
     group_name:document.getElementById('panelGroup').value||'General',
-    assigned_to:document.getElementById('panelAssignedTo').value||null,
+    assigned_to:newAssignedTo,
     completed_at:status==='done'?new Date().toISOString():null,
   };
   await updateTodo(panelId,patch);

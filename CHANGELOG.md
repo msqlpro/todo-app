@@ -2,6 +2,13 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.3 — 2026-04-22
+
+- Fix: assignee couldn't pass a task back to the owner by picking them in the Assign dropdown. The picker had been excluding the task owner in all contexts; now it excludes whoever is currently viewing. The owner appears in the list with an "(owner)" suffix so the direction is clear.
+- Per-spec rule 4, picking the owner from the dropdown is treated as unassigning — `assigned_to` is set to NULL and the task returns to the owner's main list. Both the edit panel and Quick Add enforce this.
+- Hint text reworded for assignees: "Pick their name to pass it back, or pick someone else to reassign".
+- "Not assigned" option hidden for non-owners (it's only meaningful for the owner — for assignees, "not assigned" and "assigned to the owner" mean the same thing).
+
 ## v1.8.2 — 2026-04-22
 
 - Fix: Add Task button in the Quick Add modal unresponsive. The new Assign-to row (from v1.8.1) was missing its closing `</div>`, which swallowed the actions row and broke the button's click target. Closed the tag properly.
