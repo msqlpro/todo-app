@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.9 — 2026-04-22
+
+- Hide the **"Add date"** placeholder chip from task rows. The due-date chip now only renders when a date is actually set, so tasks with real deadlines stand out and the list looks less busy. Dates can still be added via the edit panel's **Due Date** field.
+
 ## v1.8.8 — 2026-04-22
 
 - Move **Save Changes** and **Delete** buttons from the bottom of the task edit panel to the top header, next to Close. Avoids having to scroll down on long tasks to save. Buttons are slightly smaller in the header to keep the layout tidy.

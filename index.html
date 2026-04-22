@@ -862,7 +862,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.8';
+const APP_VERSION='1.8.9';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1259,12 +1259,12 @@ function renderTaskRow(t){
 
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
       ${assignChip(t)}
-      <div class="due-wrap">
+      ${t.due_date?`<div class="due-wrap">
         <div class="due-chip ${dueClass}" onclick="openDuePicker('${t.id}',this)">${esc(dueLabel)}</div>
-        <input type="date" class="due-input-inline" id="dp-${t.id}" value="${t.due_date?t.due_date.slice(0,10):''}"
+        <input type="date" class="due-input-inline" id="dp-${t.id}" value="${t.due_date.slice(0,10)}"
           onchange="setDue('${t.id}',this.value);this.classList.remove('open')"
           onblur="this.classList.remove('open')">
-      </div>
+      </div>`:''}
       <div class="status-wrap">
         <div class="sp ${spClass(t.status)}" onclick="openStatusMenu('${t.id}',this)">${spLabel(t.status)}</div>
         <div class="drop-menu" id="sm-${t.id}">
