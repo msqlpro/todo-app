@@ -2,6 +2,12 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.7 — 2026-04-22
+
+- Remove "Create account" tab from the auth screen. Focal is now a staff-only app — Supabase signups have been disabled project-wide, so the tab would only ever produce a confusing error. Auth screen simplified to sign-in only.
+- Add a small footnote below the Forgot password link: *"Focal is for Brainbox Candy staff. Need access? Ask Mark."* — so anyone who stumbles on the URL knows where to go.
+- Dropped the orphaned `isSignUp` state and both tab click handlers.
+
 ## v1.8.6 — 2026-04-22
 
 - Drop the "unseen done" badge format on the Assigned sidebar — it was fiddly and not adding enough value over a plain count. Badge now shows just the number of active tasks currently assigned to others, like every other sidebar counter.

@@ -486,10 +486,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       <span class="auth-brand-tag">Focal</span>
     </div>
     <div class="auth-sub">The Brainbox Candy task manager</div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tabIn">Sign in</button>
-      <button class="auth-tab" id="tabUp">Create account</button>
-    </div>
+    <div style="height:22px"></div>
     <div class="auth-err" id="authErr"></div>
     <label class="field-label">Email</label>
     <input class="field-input" type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
@@ -498,6 +495,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
     <button class="auth-submit" id="authSubmit">Sign in</button>
     <div style="text-align:center;margin-top:14px">
       <button type="button" id="forgotLink" style="background:none;border:none;color:var(--text2);font-size:12px;font-family:var(--fb);cursor:pointer;text-decoration:underline;padding:4px">Forgot password?</button>
+    </div>
+    <div style="text-align:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3);line-height:1.5">Focal is for Brainbox Candy staff.<br>Need access? Ask Mark.</div>
     </div>
   </div>
 </div>
@@ -860,11 +860,11 @@ const SB_KEY='sb_publishable_FE2Dibu9t-R6EdJ6s9iWFQ_YYbmd_kY';
 const {createClient}=supabase;
 const sb=createClient(SB_URL,SB_KEY);
 
-let todos=[],profiles=[],user=null,isSignUp=false;
+let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.6';
+const APP_VERSION='1.8.7';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -888,30 +888,15 @@ function showApp(){
   document.getElementById('sbAv').textContent=(e[0]||'U').toUpperCase();
   loadTodos();loadEvents();loadSpaces();loadProfiles();subscribeRealtime();
 }
-document.getElementById('tabIn').onclick=()=>{
-  isSignUp=false;
-  document.getElementById('tabIn').classList.add('active');
-  document.getElementById('tabUp').classList.remove('active');
-  document.getElementById('authSubmit').textContent='Sign in';
-  document.getElementById('authErr').style.display='none';
-};
-document.getElementById('tabUp').onclick=()=>{
-  isSignUp=true;
-  document.getElementById('tabUp').classList.add('active');
-  document.getElementById('tabIn').classList.remove('active');
-  document.getElementById('authSubmit').textContent='Create account';
-  document.getElementById('authErr').style.display='none';
-};
 document.getElementById('authSubmit').onclick=async()=>{
   const email=document.getElementById('authEmail').value.trim();
   const pass=document.getElementById('authPass').value;
   if(!email||!pass){showAuthErr('Please enter email and password.');return;}
   const btn=document.getElementById('authSubmit');
   btn.disabled=true;btn.textContent='…';
-  const r=isSignUp?await sb.auth.signUp({email,password:pass}):await sb.auth.signInWithPassword({email,password:pass});
-  btn.disabled=false;btn.textContent=isSignUp?'Create account':'Sign in';
+  const r=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Sign in';
   if(r.error)showAuthErr(r.error.message);
-  else if(isSignUp&&!r.data.session)showAuthErr('Check your email to confirm, then sign in.');
 };
 document.getElementById('authPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('authSubmit').click();});
 document.getElementById('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('authPass').focus();});
