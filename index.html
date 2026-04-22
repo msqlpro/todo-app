@@ -97,6 +97,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .search-inc input{margin:0;cursor:pointer;accent-color:var(--accent);width:14px;height:14px}
 .tb-spacer{flex:1}
 .view-toggle{display:flex;background:var(--surface2);border-radius:8px;padding:2px;gap:1px;flex-shrink:0}
+.tb-whoami{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);font-weight:500;white-space:nowrap;flex-shrink:0;padding:2px 0}
+.tb-whoami::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--s-done);display:inline-block}
 .view-btn{border:none;background:transparent;border-radius:6px;padding:5px 8px;cursor:pointer;color:var(--text3);transition:all .15s;display:flex;align-items:center}
 .view-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 .tb-btn{display:flex;align-items:center;gap:5px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);padding:6px 11px;font-family:var(--fb);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
@@ -597,6 +599,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <span>Inc. done</span>
       </label>
       <div class="tb-spacer"></div>
+      <div class="tb-whoami" id="tbWhoami" title="Signed in"></div>
       <div class="view-toggle">
         <button class="view-btn active" id="vbList" onclick="setDisplayMode('list')" title="List">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect y="1" width="13" height="2" rx="1"/><rect y="6" width="13" height="2" rx="1"/><rect y="11" width="13" height="2" rx="1"/></svg>
@@ -862,7 +865,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.13';
+const APP_VERSION='1.8.14';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -881,9 +884,12 @@ function showApp(){
   document.getElementById('authWrap').style.display='none';
   document.getElementById('appShell').style.display='flex';
   const e=user.email||'';
+  const first=(e.split('@')[0]||'User').replace(/^\w/,c=>c.toUpperCase());
   document.getElementById('sbEmail').textContent=e;
   document.getElementById('sbName').textContent=e.split('@')[0];
   document.getElementById('sbAv').textContent=(e[0]||'U').toUpperCase();
+  const wa=document.getElementById('tbWhoami');
+  if(wa){wa.textContent=first;wa.title='Signed in as '+e;}
   loadTodos();loadEvents();loadSpaces();loadProfiles();subscribeRealtime();
 }
 document.getElementById('authSubmit').onclick=async()=>{
@@ -1101,11 +1107,11 @@ function assignChip(t){
   if(t.user_id===user.id&&t.assigned_to!==user.id){
     const who=esc(userDisplayById(t.assigned_to));
     const unseen=t.done&&t.assignee_seen===false;
-    return `<span class="assign-chip out${unseen?' unseen':''}" title="${unseen?who+' completed this — click to review':'Assigned to '+who}">→&nbsp;${who}${unseen?' ✓':''}</span>`;
+    return `<span class="assign-chip out${unseen?' unseen':''}" title="${unseen?who+' completed this — click to review':'Assigned to '+who}">Assigned to ${who}${unseen?' ✓':''}</span>`;
   }
   if(t.assigned_to===user.id&&t.user_id!==user.id){
     const who=esc(userDisplayById(t.user_id));
-    return `<span class="assign-chip in" title="Assigned to you by ${who}">←&nbsp;${who}</span>`;
+    return `<span class="assign-chip in" title="Assigned to you by ${who}">From ${who}</span>`;
   }
   return '';
 }

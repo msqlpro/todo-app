@@ -2,6 +2,11 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.14 — 2026-04-22
+
+- Assignment chips reworded for clarity. `→ Nicky` becomes **Assigned to Nicky**, `← Mark` becomes **From Mark**. Same colours, same click behaviour, clearer meaning at a glance — no arrows to decode.
+- Added a subtle **"Signed in as [name]"** pill to the topbar (next to the view toggle). Small, grey, with a green dot. Solves the "which account am I on?" question for anyone who's got two tabs open for testing, without disrupting the main layout.
+
 ## v1.8.13 — 2026-04-22
 
 - **All Tasks** sidebar badge and dashboard **Total** card now count only active (not-done) tasks. The Completed view has its own count — there's no need for finished items to inflate the "All Tasks" number. Matches the behaviour of every other sidebar badge (Today, Upcoming, priorities, etc). The Settings → Account row "Total tasks" still shows the lifetime count, since that panel is summarising history rather than workload.
