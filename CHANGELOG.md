@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.6 — 2026-04-22
+
+- Drop the "unseen done" badge format on the Assigned sidebar — it was fiddly and not adding enough value over a plain count. Badge now shows just the number of active tasks currently assigned to others, like every other sidebar counter.
+
 ## v1.8.5 — 2026-04-22
 
 - Fix: `updateTodo` now surfaces Supabase errors instead of silently swallowing them. Previously, if any row write was rejected (RLS, trigger, constraint), the UI would update local state as if it succeeded — so the app could drift out of sync with the database without any feedback. Failed writes now show a toast and trigger a full reload so local state matches reality.

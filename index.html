@@ -864,7 +864,7 @@ let todos=[],profiles=[],user=null,isSignUp=false;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.5';
+const APP_VERSION='1.8.6';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1126,17 +1126,7 @@ function updateCounts(){
   set('c-overdue',todos.filter(isOverdue).length);
   set('c-projects',todos.filter(t=>t.start_date&&t.due_date&&!t.done).length);
   set('c-inbox',user?todos.filter(t=>t.assigned_to===user.id&&t.user_id!==user.id&&!t.done).length:0);
-  if(user){
-    const activeAssigned=todos.filter(t=>t.user_id===user.id&&t.assigned_to&&t.assigned_to!==user.id&&!t.done).length;
-    const unseenDone=todos.filter(t=>t.user_id===user.id&&t.done&&t.assignee_seen===false&&t.assigned_to&&t.assigned_to!==user.id).length;
-    const el=document.getElementById('c-assigned');
-    if(el){
-      el.textContent=unseenDone>0?`${activeAssigned} · ${unseenDone} done`:activeAssigned;
-      el.style.color=unseenDone>0?'var(--urgent)':'';
-    }
-  } else {
-    set('c-assigned',0);
-  }
+  set('c-assigned',user?todos.filter(t=>t.user_id===user.id&&t.assigned_to&&t.assigned_to!==user.id&&!t.done).length:0);
   set('c-urgent',active.filter(t=>t.priority==='urgent').length);
   set('c-high',active.filter(t=>t.priority==='high').length);
   set('c-medium',active.filter(t=>t.priority==='medium').length);
