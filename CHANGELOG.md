@@ -2,6 +2,14 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.12 — 2026-04-22
+
+- Fix: assignee-to-owner reassignment via new SECURITY DEFINER RPC `reassign_todo(p_id, p_new_assigned_to)`. The regular UPDATE path was being blocked by trigger + RLS interplay — when Nicky set `assigned_to=NULL` to pass a task back, Postgres rejected it with *"new row violates row-level security policy"* even though the policy should have permitted the write. Worked around by routing all assignee-driven assignment changes through a database function that bypasses RLS and performs its own permission check (must be current owner or current assignee). Owner-driven changes still use the regular update path.
+
+## v1.8.11 — 2026-04-22
+
+- Fix: silent save failure when an assignee picked the owner from the Assigned-to dropdown. After the update set `assigned_to=null`, the assignee no longer had RLS read access, so the chained `.select().single()` failed with PGRST116 and the save appeared broken. Dropped the select-back; merged the patch into local state directly and removed the task from view if it's no longer RLS-visible to the current user.
+
 ## v1.8.10 — 2026-04-22
 
 - Inbox and Assigned sidebar entries auto-hide when empty and reappear as soon as they have content. Cleaner sidebar for users who rarely receive assignments (or rarely make them). The entry stays visible if you're actively viewing it even if the last item gets cleared mid-session, so it doesn't disappear under you.

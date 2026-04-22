@@ -27,6 +27,10 @@ This document is the contract. Anything not stated here is out of scope for v1.
 | UPDATE | `auth.uid() = user_id` OR `auth.uid() = assigned_to` |
 | DELETE | `auth.uid() = user_id` |
 
+### Reassignment RPC
+
+Regular UPDATEs work when the user retains RLS access after the write. But when an assignee hands a task back to the owner (setting `assigned_to = NULL`), the UPDATE strips the assignee's own access mid-transaction — Postgres rejects this as *"new row violates row-level security policy"* even without a WITH CHECK clause. Workaround: a `SECURITY DEFINER` function `public.reassign_todo(p_id, p_new_assigned_to)` that bypasses RLS and performs its own permission check (caller must be the current owner or current assignee). The frontend routes all non-owner assignment changes through this RPC; owner-driven changes and all other field updates continue to use the regular UPDATE path.
+
 ## Data model changes
 
 Three new columns on `public.todos`:
