@@ -51,6 +51,7 @@ Larger features are scoped in advance before any code is written. Current specs:
 
 1. Edit `index.html`.
 2. Bump `APP_VERSION` and `APP_BUILD`.
-3. Add an entry to the top of `CHANGELOG.md`.
-4. Update this README if features, data model or preferences changed.
-5. Commit + push to `main`. GitHub Pages picks up within a minute.
+3. **Update `version.json` to match the new `APP_VERSION`.** This is what triggers the auto-update banner in open tabs. If you forget this step, running tabs won't know there's a new version.
+4. Add an entry to the top of `CHANGELOG.md`.
+5. Update this README if features, data model or preferences changed.
+6. Commit + push to `main`. GitHub Pages picks up within a minute. Open tabs will see the banner within 5 minutes (or sooner if the user switches away and back to the tab).

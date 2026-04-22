@@ -31,6 +31,12 @@
   --ui-fs:13px;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px;line-height:1.5;min-height:100vh}
+.update-banner{position:fixed;top:0;left:0;right:0;background:var(--bbc-pink,#ec008c);color:#fff;padding:8px 16px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;z-index:9999;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.12);transition:opacity .15s}
+.update-banner:hover{opacity:.92}
+.update-banner-icon{display:inline-block;font-size:15px}
+.update-banner u{text-decoration-thickness:1.5px;text-underline-offset:2px}
+body:has(.update-banner:not([style*="display:none"])) .topbar,
+body:has(.update-banner:not([style*="display: none"])) .topbar{top:36px}
 
 /* AUTH */
 .auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
@@ -498,6 +504,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 </head>
 <body>
 
+<!-- UPDATE BANNER -->
+<div id="updateBanner" class="update-banner" style="display:none" onclick="applyUpdate()">
+  <span class="update-banner-icon">⟳</span>
+  <span>A new version is available — <u>click to refresh</u></span>
+</div>
+
 <!-- AUTH -->
 <div id="authWrap" class="auth-wrap">
   <div class="auth-card">
@@ -890,8 +902,47 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.1';
+const APP_VERSION='1.9.2';
 const APP_BUILD='2026-04-22';
+
+// ── AUTO-UPDATE CHECK ───────────────────────────────────────────
+// Poll version.json on load and every 5 minutes. If the deployed
+// version is newer than this bundled version, show the refresh banner.
+async function checkForUpdate(){
+  try{
+    const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)return;
+    const j=await r.json();
+    if(j&&j.version&&j.version!==APP_VERSION&&isNewerVersion(j.version,APP_VERSION)){
+      const b=document.getElementById('updateBanner');
+      if(b)b.style.display='flex';
+    }
+  }catch(e){/* offline or fetch failed — silent */}
+}
+function isNewerVersion(remote,local){
+  // Compare semver-ish strings like '1.9.2' vs '1.9.1'
+  const r=remote.split('.').map(n=>parseInt(n,10)||0);
+  const l=local.split('.').map(n=>parseInt(n,10)||0);
+  for(let i=0;i<Math.max(r.length,l.length);i++){
+    const a=r[i]||0,b=l[i]||0;
+    if(a>b)return true;
+    if(a<b)return false;
+  }
+  return false;
+}
+function applyUpdate(){
+  // Aggressive reload: strip query/hash and bust the cache.
+  const url=location.pathname+'?v='+Date.now();
+  location.replace(url);
+}
+// Fire immediately, then every 5 minutes.
+checkForUpdate();
+setInterval(checkForUpdate,5*60*1000);
+// Also re-check whenever the tab regains focus — catches 'user came back
+// after lunch, a release happened meanwhile'.
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')checkForUpdate();
+});
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
 let importLines=[];

@@ -2,6 +2,13 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.2 — 2026-04-22
+
+- **New: auto-update banner.** When a new version is deployed, open tabs now show a pink banner at the top reading *"A new version is available — click to refresh"*. Clicking it force-reloads with a cache-buster to fetch the latest build. Eliminates the need for users to know about Cmd+Shift+R when a fix goes live.
+- Check runs on page load, every 5 minutes, and when the tab regains visibility (e.g. user returns from another app). Silent when offline.
+- Compares semver version strings properly — `1.10.0` is correctly recognised as newer than `1.9.9`.
+- New `version.json` file at the repo root is the source of truth; must be updated alongside each `APP_VERSION` bump going forward.
+
 ## v1.9.1 — 2026-04-22
 
 - **New: Assignment history.** Every task now has a server-side audit trail of assignment events — created, assigned, reassigned, unassigned, handed back. Kept forever.
