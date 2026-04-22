@@ -2,6 +2,12 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.5 — 2026-04-22
+
+- Fix: `updateTodo` now surfaces Supabase errors instead of silently swallowing them. Previously, if any row write was rejected (RLS, trigger, constraint), the UI would update local state as if it succeeded — so the app could drift out of sync with the database without any feedback. Failed writes now show a toast and trigger a full reload so local state matches reality.
+- Task writes now use `.select().single()` to return the DB row, so trigger-computed fields like `assigned_at` are reflected locally immediately.
+- Data repair: cleared a stuck assignment on the "Meeting with Thea" task where Nicky's reassignment back to Mark had silently failed under the pre-fix code path.
+
 ## v1.8.4 — 2026-04-22
 
 - Fix: the Assigned sidebar badge showed `0` even when tasks were assigned out, because v1.8.0 counted only unseen completions (red notifications) rather than total assignments. Now shows the total count of active tasks assigned to others (e.g. `2` when you have two tasks with Nicky). When there are unseen completions on top, the label becomes e.g. `2 · 1 done` and turns red until you've acknowledged them.

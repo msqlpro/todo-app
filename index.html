@@ -864,7 +864,7 @@ let todos=[],profiles=[],user=null,isSignUp=false;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.4';
+const APP_VERSION='1.8.5';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -986,9 +986,17 @@ async function addTodo(f){
 async function updateTodo(id,fields){
   if(fields.status==='done'){fields.done=true;fields.completed_at=new Date().toISOString();}
   else if(fields.status&&fields.status!=='done'){fields.done=false;fields.completed_at=null;}
-  await sb.from('todos').update(fields).eq('id',id);
+  const {data,error}=await sb.from('todos').update(fields).eq('id',id).select().single();
+  if(error){
+    toast('Couldn\'t save: '+error.message);
+    console.error('updateTodo failed',{id,fields,error});
+    // Reload from DB so local state matches truth instead of silently diverging
+    await loadTodos();
+    return;
+  }
   const i=todos.findIndex(t=>t.id===id);
-  if(i!==-1)todos[i]={...todos[i],...fields};
+  // Prefer DB-returned row (it includes trigger-computed fields like assigned_at)
+  if(i!==-1)todos[i]=data?{...todos[i],...data}:{...todos[i],...fields};
   updateCounts();render();
 }
 async function deleteTodo(id){
