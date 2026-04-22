@@ -862,7 +862,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.12';
+const APP_VERSION='1.8.13';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1114,7 +1114,7 @@ function assignChip(t){
 function updateCounts(){
   const set=(id,n)=>{const el=document.getElementById(id);if(el)el.textContent=n;};
   const active=todos.filter(t=>!t.done);
-  set('c-all',todos.length);
+  set('c-all',active.length);
   set('c-today',todos.filter(t=>isDueToday(t)&&!t.done).length);
   set('c-upcoming',todos.filter(t=>{if(!t.due_date||t.done)return false;return t.due_date.slice(0,10)>today();}).length);
   set('c-overdue',todos.filter(isOverdue).length);
@@ -1140,9 +1140,9 @@ function updateCounts(){
   set('c-prog',todos.filter(t=>t.status==='in_progress').length);
   set('c-stuck',todos.filter(t=>t.status==='stuck').length);
   set('c-done',todos.filter(t=>t.done).length);
-  const done=todos.filter(t=>t.done).length,total=todos.length;
+  const done=todos.filter(t=>t.done).length,total=todos.length,activeTotal=active.length;
   const pct=total?Math.round(done/total*100):0;
-  set('d-total',total);set('d-prog',todos.filter(t=>t.status==='in_progress').length);
+  set('d-total',activeTotal);set('d-prog',todos.filter(t=>t.status==='in_progress').length);
   set('d-urgent',active.filter(t=>t.priority==='urgent').length);
   set('d-overdue',todos.filter(isOverdue).length);
   set('d-done',done);set('d-pct',pct+'%');

@@ -2,6 +2,11 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.13 — 2026-04-22
+
+- **All Tasks** sidebar badge and dashboard **Total** card now count only active (not-done) tasks. The Completed view has its own count — there's no need for finished items to inflate the "All Tasks" number. Matches the behaviour of every other sidebar badge (Today, Upcoming, priorities, etc). The Settings → Account row "Total tasks" still shows the lifetime count, since that panel is summarising history rather than workload.
+- Overall Progress percentage is unchanged — still computes done ÷ lifetime total.
+
 ## v1.8.12 — 2026-04-22
 
 - Fix: assignee-to-owner reassignment via new SECURITY DEFINER RPC `reassign_todo(p_id, p_new_assigned_to)`. The regular UPDATE path was being blocked by trigger + RLS interplay — when Nicky set `assigned_to=NULL` to pass a task back, Postgres rejected it with *"new row violates row-level security policy"* even though the policy should have permitted the write. Worked around by routing all assignee-driven assignment changes through a database function that bypasses RLS and performs its own permission check (must be current owner or current assignee). Owner-driven changes still use the regular update path.
