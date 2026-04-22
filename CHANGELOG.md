@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.10 — 2026-04-22
+
+- Inbox and Assigned sidebar entries auto-hide when empty and reappear as soon as they have content. Cleaner sidebar for users who rarely receive assignments (or rarely make them). The entry stays visible if you're actively viewing it even if the last item gets cleared mid-session, so it doesn't disappear under you.
+
 ## v1.8.9 — 2026-04-22
 
 - Hide the **"Add date"** placeholder chip from task rows. The due-date chip now only renders when a date is actually set, so tasks with real deadlines stand out and the list looks less busy. Dates can still be added via the edit panel's **Due Date** field.

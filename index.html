@@ -532,11 +532,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="2" width="8" height="2" rx="1"/><rect x="3" y="6" width="9" height="2" rx="1"/><rect x="1" y="10" width="6" height="2" rx="1"/></svg>
         Projects<span class="sb-badge" id="c-projects">0</span>
       </button>
-      <button class="sb-btn" data-view="inbox" onclick="setView(this)">
+      <button class="sb-btn" id="sb-inbox" data-view="inbox" onclick="setView(this)" style="display:none">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M1 2h12v7H9.5l-.5 1h-4l-.5-1H1V2zm0 8.5V12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1.5H9.91l-.5 1h-4.82l-.5-1H1z"/></svg>
         Inbox<span class="sb-badge" id="c-inbox" style="color:var(--bbc-pink)">0</span>
       </button>
-      <button class="sb-btn" data-view="assigned" onclick="setView(this)">
+      <button class="sb-btn" id="sb-assigned" data-view="assigned" onclick="setView(this)" style="display:none">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 1.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 10.5C3 8.6 5 7.5 7 7.5s4 1.1 4 3v1H3v-1zm8.5-5.5 1.5 1.5-2.5 2.5-1-1 2-2z"/></svg>
         Assigned<span class="sb-badge" id="c-assigned">0</span>
       </button>
@@ -862,7 +862,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.9';
+const APP_VERSION='1.8.10';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -1110,6 +1110,18 @@ function updateCounts(){
   set('c-projects',todos.filter(t=>t.start_date&&t.due_date&&!t.done).length);
   set('c-inbox',user?todos.filter(t=>t.assigned_to===user.id&&t.user_id!==user.id&&!t.done).length:0);
   set('c-assigned',user?todos.filter(t=>t.user_id===user.id&&t.assigned_to&&t.assigned_to!==user.id&&!t.done).length:0);
+  // Hide Inbox/Assigned entries when empty — show as soon as they have content,
+  // or when the user is actively viewing them (so the entry doesn't vanish mid-use).
+  const inboxBtn=document.getElementById('sb-inbox');
+  const assignedBtn=document.getElementById('sb-assigned');
+  if(inboxBtn){
+    const n=+document.getElementById('c-inbox').textContent;
+    inboxBtn.style.display=(n>0||curView==='inbox')?'':'none';
+  }
+  if(assignedBtn){
+    const n=+document.getElementById('c-assigned').textContent;
+    assignedBtn.style.display=(n>0||curView==='assigned')?'':'none';
+  }
   set('c-urgent',active.filter(t=>t.priority==='urgent').length);
   set('c-high',active.filter(t=>t.priority==='high').length);
   set('c-medium',active.filter(t=>t.priority==='medium').length);
