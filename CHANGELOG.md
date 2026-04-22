@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.4 — 2026-04-22
+
+- **Fix: "Add task…" bar now shows on empty views too.** Previously, when a view had zero tasks, only the "No tasks here ✦" empty state rendered — leaving no way to add a task except the small **+ Add Task** button in the top-right. Now the familiar **Add task…** bar appears above the empty-state message, consistent with every non-empty view. Clicking it opens the quick-add with the space's name pre-selected as the group (or "General" if outside a space).
+
 ## v1.9.3 — 2026-04-22
 
 - Fix: the v1.9.2 update banner was using `position:fixed` and overlapping the dashboard cards at the top of the page. Moved the banner inside the main content column as a regular in-flow block — it now pushes the topbar and content down naturally when visible, and scrolls away as you scroll through tasks. No more occlusion.

@@ -898,7 +898,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.3';
+const APP_VERSION='1.9.4';
 const APP_BUILD='2026-04-22';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1357,8 +1357,16 @@ function render(){
 function renderList(){
   const list=getFiltered();
   const el=document.getElementById('listView');
+  // Determine which group the quick-add should target. In the empty case,
+  // default to 'General' (or the current space name if we're in one).
+  const defaultGroup=(curView&&curView.startsWith('space_'))?curView.slice(6):'General';
+  const addRowHtml=`<div class="add-row" onclick="openQuickAdd('${esc(defaultGroup)}')">
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5.5 1v9M1 5.5h9"/></svg>
+    Add task…
+  </div>`;
   if(!list.length){
-    el.innerHTML='<div class="empty-state"><div class="empty-icon">✦</div><div class="empty-title">No tasks here</div><div class="empty-sub">Click "+ Add Task" to get started</div></div>';
+    el.innerHTML=`<div class="group-section"><div class="group-body">${addRowHtml}</div></div>
+      <div class="empty-state"><div class="empty-icon">✦</div><div class="empty-title">No tasks here</div><div class="empty-sub">Click the bar above to add your first task</div></div>`;
     return;
   }
   const grouped={};
