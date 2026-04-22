@@ -862,7 +862,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.10';
+const APP_VERSION='1.8.11';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -969,7 +969,13 @@ async function addTodo(f){
 async function updateTodo(id,fields){
   if(fields.status==='done'){fields.done=true;fields.completed_at=new Date().toISOString();}
   else if(fields.status&&fields.status!=='done'){fields.done=false;fields.completed_at=null;}
-  const {data,error}=await sb.from('todos').update(fields).eq('id',id).select().single();
+  // IMPORTANT: no .select().single() after the update — if the caller is reassigning
+  // a task away from themselves (e.g. Nicky handing a task back to Mark, the owner),
+  // they lose RLS read access to the updated row, which makes the select fail with
+  // PGRST116 and looks like a silent save failure. Just trust the update succeeded
+  // and merge the fields into local state; the realtime subscription + next loadTodos
+  // will reconcile any trigger-computed fields (assigned_at etc.).
+  const {error}=await sb.from('todos').update(fields).eq('id',id);
   if(error){
     toast('Couldn\'t save: '+error.message);
     console.error('updateTodo failed',{id,fields,error});
@@ -978,8 +984,13 @@ async function updateTodo(id,fields){
     return;
   }
   const i=todos.findIndex(t=>t.id===id);
-  // Prefer DB-returned row (it includes trigger-computed fields like assigned_at)
-  if(i!==-1)todos[i]=data?{...todos[i],...data}:{...todos[i],...fields};
+  if(i!==-1){
+    todos[i]={...todos[i],...fields};
+    // If we reassigned away from ourselves and we're not the owner, we can no longer
+    // see the task — drop it from local state so the UI matches what RLS allows.
+    const stillVisible=user&&(todos[i].user_id===user.id||todos[i].assigned_to===user.id);
+    if(!stillVisible)todos.splice(i,1);
+  }
   updateCounts();render();
 }
 async function deleteTodo(id){
