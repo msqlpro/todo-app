@@ -2,6 +2,11 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.8 — 2026-04-22
+
+- Move **Save Changes** and **Delete** buttons from the bottom of the task edit panel to the top header, next to Close. Avoids having to scroll down on long tasks to save. Buttons are slightly smaller in the header to keep the layout tidy.
+- Removed the now-empty panel footer to reclaim vertical space for notes.
+
 ## v1.8.7 — 2026-04-22
 
 - Remove "Create account" tab from the auth screen. Focal is now a staff-only app — Supabase signups have been disabled project-wide, so the tab would only ever produce a confusing error. Auth screen simplified to sign-in only.
