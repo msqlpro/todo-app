@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.4 — 2026-04-22
+
+- Fix: the Assigned sidebar badge showed `0` even when tasks were assigned out, because v1.8.0 counted only unseen completions (red notifications) rather than total assignments. Now shows the total count of active tasks assigned to others (e.g. `2` when you have two tasks with Nicky). When there are unseen completions on top, the label becomes e.g. `2 · 1 done` and turns red until you've acknowledged them.
+
 ## v1.8.3 — 2026-04-22
 
 - Fix: assignee couldn't pass a task back to the owner by picking them in the Assign dropdown. The picker had been excluding the task owner in all contexts; now it excludes whoever is currently viewing. The owner appears in the list with an "(owner)" suffix so the direction is clear.
