@@ -875,7 +875,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.16';
+const APP_VERSION='1.8.17';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -889,7 +889,16 @@ async function init(){
     if(s){user=s.user;showApp();}else{user=null;todos=[];showAuth();}
   });
 }
-function showAuth(){document.getElementById('authWrap').style.display='flex';document.getElementById('appShell').style.display='none';}
+function showAuth(){
+  document.getElementById('authWrap').style.display='flex';
+  document.getElementById('appShell').style.display='none';
+  const btn=document.getElementById('authSubmit');
+  if(btn){btn.disabled=false;btn.textContent='Sign in';}
+  const pw=document.getElementById('authPass');
+  if(pw)pw.value='';
+  const err=document.getElementById('authErr');
+  if(err){err.style.display='none';err.textContent='';}
+}
 function showApp(){
   document.getElementById('authWrap').style.display='none';
   document.getElementById('appShell').style.display='flex';

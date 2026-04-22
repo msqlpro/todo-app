@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.17 — 2026-04-22
+
+- Fix: after signing out, the Sign in button on the auth screen was stuck in a disabled "…" state and unresponsive. Cause: the submit handler showed the "…" label during sign-in, then `onAuthStateChange` swapped to the app shell before the button reset fired. On subsequent sign-out the auth screen came back with that stale state. `showAuth()` now resets the button, clears the password field, and hides any lingering error message.
+
 ## v1.8.16 — 2026-04-22
 
 - Fixed the sign-out flow. Clicking the user row in the bottom-left sidebar now opens a dropdown menu with **Sign out**, replacing the tiny near-invisible ↪ icon that was only visible on hover. A confirm dialog prevents accidental signouts. Click the row again (or anywhere outside) to close the menu.
