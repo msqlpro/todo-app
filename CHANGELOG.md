@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.8.16 — 2026-04-22
+
+- Fixed the sign-out flow. Clicking the user row in the bottom-left sidebar now opens a dropdown menu with **Sign out**, replacing the tiny near-invisible ↪ icon that was only visible on hover. A confirm dialog prevents accidental signouts. Click the row again (or anywhere outside) to close the menu.
+
 ## v1.8.15 — 2026-04-22
 
 - The **Assigned** view now excludes completed tasks. Previously it showed everything you'd ever assigned to someone — including long-finished items. The view is for current workload with others; completed assignments still appear in the Completed sidebar view if you need them.

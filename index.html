@@ -76,13 +76,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .sb-btn.active .sb-badge{background:rgba(232,87,26,.15);color:var(--accent)}
 .sb-divider{height:1px;background:var(--border);margin:6px 14px}
 .sb-bottom{margin-top:auto;border-top:1px solid var(--border);padding:10px 8px}
-.sb-user{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px}
+.sb-user{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;position:relative;transition:background .15s}
+.sb-user:hover{background:var(--surface2)}
 .sb-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--fh);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sb-user-info{flex:1;min-width:0}
 .sb-user-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sb-user-email{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-signout{border:none;background:transparent;color:var(--text3);cursor:pointer;padding:4px 6px;border-radius:5px;font-size:11px;transition:color .15s;flex-shrink:0}
-.sb-signout:hover{color:var(--urgent)}
+.sb-chev{color:var(--text3);font-size:10px;flex-shrink:0;transition:transform .15s}
+.sb-user.open .sb-chev{transform:rotate(180deg)}
+.sb-user-menu{position:absolute;bottom:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);padding:4px;display:none;z-index:50}
+.sb-user.open .sb-user-menu{display:block}
+.sb-user-menu button{display:block;width:100%;text-align:left;border:none;background:transparent;padding:9px 11px;border-radius:6px;font-family:var(--fb);font-size:13px;color:var(--text);cursor:pointer}
+.sb-user-menu button:hover{background:var(--surface2)}
+.sb-user-menu button.danger{color:var(--urgent)}
+.sb-user-menu button.danger:hover{background:var(--urgent-bg)}
 
 /* TOPBAR */
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:10px;height:52px;position:sticky;top:0;z-index:30;flex-wrap:nowrap}
@@ -576,10 +583,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 4.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM5.5 7a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0zm6.1-1.1-.7-.1a4.5 4.5 0 0 0-.3-.8l.4-.6a1 1 0 0 0-.1-1.3l-.6-.6a1 1 0 0 0-1.3-.1l-.6.4a4.5 4.5 0 0 0-.8-.3l-.1-.7A1 1 0 0 0 6.5 1h-.9a1 1 0 0 0-1 .9l-.1.7a4.5 4.5 0 0 0-.8.3l-.6-.4a1 1 0 0 0-1.3.1l-.6.6a1 1 0 0 0-.1 1.3l.4.6a4.5 4.5 0 0 0-.3.8l-.7.1A1 1 0 0 0 0 7v.9a1 1 0 0 0 .9 1l.7.1a4.5 4.5 0 0 0 .3.8l-.4.6a1 1 0 0 0 .1 1.3l.6.6a1 1 0 0 0 1.3.1l.6-.4a4.5 4.5 0 0 0 .8.3l.1.7a1 1 0 0 0 1 .9h.9a1 1 0 0 0 1-.9l.1-.7a4.5 4.5 0 0 0 .8-.3l.6.4a1 1 0 0 0 1.3-.1l.6-.6a1 1 0 0 0 .1-1.3l-.4-.6a4.5 4.5 0 0 0 .3-.8l.7-.1A1 1 0 0 0 14 8v-.9a1 1 0 0 0-.9-1z"/></svg>
         Settings
       </button>
-      <div class="sb-user">
+      <div class="sb-user" id="sbUser" onclick="toggleUserMenu(event)">
         <div class="sb-avatar" id="sbAv">M</div>
         <div class="sb-user-info"><div class="sb-user-name" id="sbName">User</div><div class="sb-user-email" id="sbEmail"></div></div>
-        <button class="sb-signout" onclick="signOut()" title="Sign out">↪</button>
+        <span class="sb-chev">▲</span>
+        <div class="sb-user-menu" id="sbUserMenu">
+          <button class="danger" onclick="event.stopPropagation();signOutConfirm()">Sign out</button>
+        </div>
       </div>
     </div>
   </aside>
@@ -865,7 +875,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.8.15';
+const APP_VERSION='1.8.16';
 const APP_BUILD='2026-04-22';
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
@@ -906,6 +916,19 @@ document.getElementById('authPass').addEventListener('keydown',e=>{if(e.key==='E
 document.getElementById('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('authPass').focus();});
 function showAuthErr(m){const el=document.getElementById('authErr');el.textContent=m;el.style.display='block';}
 function signOut(){sb.auth.signOut();}
+function toggleUserMenu(e){
+  e&&e.stopPropagation();
+  const el=document.getElementById('sbUser');
+  if(el)el.classList.toggle('open');
+}
+function signOutConfirm(){
+  const ok=confirm('Sign out of Focal?');
+  if(ok)signOut();
+}
+document.addEventListener('click',e=>{
+  const el=document.getElementById('sbUser');
+  if(el&&el.classList.contains('open')&&!el.contains(e.target))el.classList.remove('open');
+});
 
 document.getElementById('forgotLink').onclick=async()=>{
   const email=document.getElementById('authEmail').value.trim();
