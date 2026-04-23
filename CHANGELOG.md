@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.10 — 2026-04-23
+
+- **New: "No priority" filter pill** on the priority filter row (between 🟢 Low and "No date"). Surfaces tasks that were created without a priority set — previously they were only visible under "All", making them easy to lose once any specific priority filter was active. Handy for reviewing which tasks still need triaging.
+
 ## v1.9.9 — 2026-04-23
 
 - Fix: tasks created from the "Add task…" bar inside a space (e.g. Work, Personal) were being saved into the wrong group. The bar passed the group header label to quick-add, which under smart sort was the generic string `"Tasks"`, not the space name — so the new task landed in a group that didn't match the space's filter, and was effectively invisible from the space view. The bar now always passes the current space name when inside a space, regardless of sort mode. Tasks added from a space correctly appear in that space immediately. Repaired one existing task with this problem (`test no priority` → moved from `General` to `Work`).
