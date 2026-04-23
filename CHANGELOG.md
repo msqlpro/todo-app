@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.5 — 2026-04-22
+
+- Fix: same empty-state problem as v1.9.4 but for **Events**. When an account had no events, the "+ Add Event" button was hidden because the whole topbar returned early in the empty-state branch. The topbar now renders above the empty state, so new users (or any empty Events view) can add their first event without hunting for the button.
+
 ## v1.9.4 — 2026-04-22
 
 - **Fix: "Add task…" bar now shows on empty views too.** Previously, when a view had zero tasks, only the "No tasks here ✦" empty state rendered — leaving no way to add a task except the small **+ Add Task** button in the top-right. Now the familiar **Add task…** bar appears above the empty-state message, consistent with every non-empty view. Clicking it opens the quick-add with the space's name pre-selected as the group (or "General" if outside a space).

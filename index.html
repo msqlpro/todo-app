@@ -898,7 +898,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.4';
+const APP_VERSION='1.9.5';
 const APP_BUILD='2026-04-22';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -2268,7 +2268,12 @@ function renderEvents(){
   });
 
   if(!sorted.length){
-    el.innerHTML=`<div class="ev-empty"><div class="ev-empty-icon">📅</div><div class="ev-empty-title">No events yet</div><div class="ev-empty-sub">Click "+ Add Event" to create your first event</div></div>`;
+    el.innerHTML=`
+      <div class="ev-topbar">
+        <span class="ev-section-title">Events</span>
+        <button class="ev-add-btn" onclick="openEvModal()">+ Add Event</button>
+      </div>
+      <div class="ev-empty"><div class="ev-empty-icon">📅</div><div class="ev-empty-title">No events yet</div><div class="ev-empty-sub">Click <b>+ Add Event</b> above to create your first event</div></div>`;
     return;
   }
 
