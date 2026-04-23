@@ -714,7 +714,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 <!-- QUICK ADD -->
 <div class="modal-bg" id="quickModal" onclick="if(event.target===this)closeQuickAdd()">
   <div class="quick-box">
-    <input class="qm-input" id="qmTitle" placeholder="What needs to be done?" maxlength="300">
+    <input class="qm-input" id="qmTitle" placeholder="What needs to be done?" maxlength="300" autocomplete="off" autocorrect="off" spellcheck="true" data-form-type="other">
     <div class="qm-row">
       <select class="qm-sel" id="qmPri">
         <option value="none">⚪ Unsorted</option>
@@ -785,7 +785,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       <button class="panel-delete" onclick="deleteFromPanel()">Delete</button>
     </div>
     <div class="panel-body">
-      <textarea class="panel-title-input" id="panelTitle" placeholder="Task title…" maxlength="300" rows="2"></textarea>
+      <textarea class="panel-title-input" id="panelTitle" placeholder="Task title…" maxlength="300" rows="2" autocomplete="off" autocorrect="off" spellcheck="true" data-form-type="other"></textarea>
 
       <div class="panel-field">
         <span class="panel-field-label">Status</span>
@@ -917,7 +917,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.12';
+const APP_VERSION='1.9.13';
 const APP_BUILD='2026-04-23';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────

@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.13 — 2026-04-23
+
+- Fix: browser autofill was suggesting previously-typed task titles when focussing the Add Task or Edit Task title fields — e.g. typing "t" would pop up "test no priority" from a week ago. Added `autocomplete="off"` and related anti-autofill attributes to both title inputs. Spellcheck remains on. Browsers still differ slightly in how strictly they honour these hints, but Chrome/Safari on Mac stop offering suggestions entirely.
+
 ## v1.9.12 — 2026-04-23
 
 - **Fix: Forgot password flow now actually works.** The reset email sends a link correctly, but clicking it previously just returned the user to the sign-in screen with no visible way to set a new password — the app wasn't listening for the `PASSWORD_RECOVERY` auth event. Now when a user arrives via a reset link, they see a dedicated "Set a new password" screen with two fields (new password + confirm). Once set, they're signed in automatically. Minimum 8 characters; standard confirmation check.
