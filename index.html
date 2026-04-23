@@ -898,7 +898,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.6';
+const APP_VERSION='1.9.7';
 const APP_BUILD='2026-04-23';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1443,7 +1443,41 @@ function renderTaskRow(t){
 }
 
 function renderBoard(){
-  const list=getFiltered();
+  let list=getFiltered();
+  // Board-specific: the Done column is only meaningful if it can actually
+  // contain tasks. getFiltered() hides done items from most views (they're
+  // not 'active workload'), but the board depends on them. Re-inject the
+  // done tasks that would match the current view if its !done clause were
+  // dropped. Limit to the most recent 20 so the column doesn't grow forever.
+  if(user){
+    const ids=new Set(list.map(t=>t.id));
+    const matchesViewIgnoringDone=t=>{
+      if(!t.done)return false;
+      if(ids.has(t.id))return false;
+      const hideAway=!isAssignedAwayByMe(t);
+      if(curView==='all')return hideAway;
+      if(curView==='completed')return hideAway;
+      if(curView==='today')return isDueToday(t)&&hideAway;
+      if(curView==='upcoming')return t.due_date&&t.due_date.slice(0,10)>today()&&hideAway;
+      if(curView==='overdue')return false;
+      if(curView==='projects')return t.start_date&&t.due_date&&hideAway;
+      if(curView==='urgent')return t.priority==='urgent'&&hideAway;
+      if(curView==='high')return t.priority==='high'&&hideAway;
+      if(curView==='medium')return t.priority==='medium'&&hideAway;
+      if(curView==='low')return t.priority==='low'&&hideAway;
+      if(curView==='in_progress')return false;
+      if(curView==='stuck')return false;
+      if(curView==='inbox')return isAssignedToMe(t);
+      if(curView==='assigned')return isAssignedAwayByMe(t);
+      if(curView.startsWith('space_')){const sn=curView.slice(6).toLowerCase();return (t.group_name||'').toLowerCase()===sn&&hideAway;}
+      return false;
+    };
+    const doneExtras=todos
+      .filter(matchesViewIgnoringDone)
+      .sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||''))
+      .slice(0,20);
+    list=list.concat(doneExtras);
+  }
   const cols=[
     {key:'not_started',label:'Not Started',cls:'not',bar:'bcb-not'},
     {key:'in_progress',label:'In Progress',cls:'prog',bar:'bcb-prog'},

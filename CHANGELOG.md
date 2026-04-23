@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.7 — 2026-04-23
+
+- Fix: Board view's **Done ✓** column was always empty because the list-level filter (used by all views) hides completed tasks as "not active workload". Board now re-injects the most recent 20 completed tasks that would match the current view, specifically for the Done column. List view, counts, and other views are unaffected — only the Board adds the done tasks back. Overdue, In Progress, and Stuck views remain done-free since completion isn't meaningful there.
+
 ## v1.9.6 — 2026-04-23
 
 - Fix: completed tasks with a due date were still appearing as pips in the **Calendar** view. The calendar's task map was being built from all tasks with a `due_date` regardless of `done` status. Filter now excludes done tasks, matching the behaviour of Today/Upcoming/Overdue and the list view. The Board view already handles this correctly via its dedicated Done column.
