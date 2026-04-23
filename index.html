@@ -898,7 +898,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.7';
+const APP_VERSION='1.9.8';
 const APP_BUILD='2026-04-23';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -931,11 +931,11 @@ function applyUpdate(){
   const url=location.pathname+'?v='+Date.now();
   location.replace(url);
 }
-// Fire immediately, then every 5 minutes.
-checkForUpdate();
-setInterval(checkForUpdate,5*60*1000);
-// Also re-check whenever the tab regains focus — catches 'user came back
-// after lunch, a release happened meanwhile'.
+// First check: wait 2s after load so the DOM is ready and the banner element
+// exists. Subsequent checks: every 60s (was 5 min — too infrequent for the
+// "user stays on Focal all day" case). Plus one more on visibility change.
+setTimeout(checkForUpdate,2000);
+setInterval(checkForUpdate,60*1000);
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible')checkForUpdate();
 });

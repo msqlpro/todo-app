@@ -2,6 +2,13 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.8 — 2026-04-23
+
+- Update-check reliability improvements. Two issues were making the "new version available" banner inconsistent:
+  1. The initial check ran synchronously at script parse time, before the DOM was ready — if the `updateBanner` element wasn't yet in the tree, the version mismatch was silently detected but no banner could be shown. First check now fires 2 seconds after load.
+  2. 5-minute polling was too infrequent for a workflow where users stay on Focal all day. Reduced to 60 seconds so a deploy is picked up within a minute of it becoming visible to the browser.
+- Visibility-change handler (tab re-focus) unchanged — still fires a check when you return to the tab.
+
 ## v1.9.7 — 2026-04-23
 
 - Fix: Board view's **Done ✓** column was always empty because the list-level filter (used by all views) hides completed tasks as "not active workload". Board now re-injects the most recent 20 completed tasks that would match the current view, specifically for the Done column. List view, counts, and other views are unaffected — only the Board adds the done tasks back. Overdue, In Progress, and Stuck views remain done-free since completion isn't meaningful there.
