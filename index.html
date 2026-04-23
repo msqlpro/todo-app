@@ -898,8 +898,8 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.5';
-const APP_BUILD='2026-04-22';
+const APP_VERSION='1.9.6';
+const APP_BUILD='2026-04-23';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
 // Poll version.json on load and every 5 minutes. If the deployed
@@ -1483,7 +1483,7 @@ function renderCalendar(){
   const monthName=new Date(calY,calM,1).toLocaleString('default',{month:'long',year:'numeric'});
   const todayStr=today();
   const taskMap={};
-  todos.forEach(t=>{if(t.due_date){const k=t.due_date.slice(0,10);if(!taskMap[k])taskMap[k]=[];taskMap[k].push(t);}});
+  todos.forEach(t=>{if(t.due_date&&!t.done){const k=t.due_date.slice(0,10);if(!taskMap[k])taskMap[k]=[];taskMap[k].push(t);}});
   let cells='',dayCount=1,nextCount=1;
   for(let r=0;r<6;r++){
     for(let c=0;c<7;c++){

@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.6 — 2026-04-23
+
+- Fix: completed tasks with a due date were still appearing as pips in the **Calendar** view. The calendar's task map was being built from all tasks with a `due_date` regardless of `done` status. Filter now excludes done tasks, matching the behaviour of Today/Upcoming/Overdue and the list view. The Board view already handles this correctly via its dedicated Done column.
+
 ## v1.9.5 — 2026-04-22
 
 - Fix: same empty-state problem as v1.9.4 but for **Events**. When an account had no events, the "+ Add Event" button was hidden because the whole topbar returned early in the empty-state branch. The topbar now renders above the empty state, so new users (or any empty Events view) can add their first event without hunting for the button.
