@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.9 — 2026-04-23
+
+- Fix: tasks created from the "Add task…" bar inside a space (e.g. Work, Personal) were being saved into the wrong group. The bar passed the group header label to quick-add, which under smart sort was the generic string `"Tasks"`, not the space name — so the new task landed in a group that didn't match the space's filter, and was effectively invisible from the space view. The bar now always passes the current space name when inside a space, regardless of sort mode. Tasks added from a space correctly appear in that space immediately. Repaired one existing task with this problem (`test no priority` → moved from `General` to `Work`).
+
 ## v1.9.8 — 2026-04-23
 
 - Update-check reliability improvements. Two issues were making the "new version available" banner inconsistent:

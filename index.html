@@ -898,7 +898,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.8';
+const APP_VERSION='1.9.9';
 const APP_BUILD='2026-04-23';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1357,9 +1357,13 @@ function render(){
 function renderList(){
   const list=getFiltered();
   const el=document.getElementById('listView');
-  // Determine which group the quick-add should target. In the empty case,
-  // default to 'General' (or the current space name if we're in one).
-  const defaultGroup=(curView&&curView.startsWith('space_'))?curView.slice(6):'General';
+  // Determine which group the quick-add should target. If we're inside a
+  // space, always use the space name — regardless of what the sort mode
+  // chose to label the group as (e.g. 'Tasks' under smart sort). Otherwise
+  // default to 'General' when the list is empty.
+  const inSpace=curView&&curView.startsWith('space_');
+  const spaceName=inSpace?curView.slice(6):null;
+  const defaultGroup=spaceName||'General';
   const addRowHtml=`<div class="add-row" onclick="openQuickAdd('${esc(defaultGroup)}')">
     <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5.5 1v9M1 5.5h9"/></svg>
     Add task…
@@ -1372,7 +1376,12 @@ function renderList(){
   const grouped={};
   list.forEach(t=>{const g=sortMode==='group'?(t.group_name||'General'):'Tasks';if(!grouped[g])grouped[g]=[];grouped[g].push(t);});
   const multi=Object.keys(grouped).length>1;
-  el.innerHTML=Object.entries(grouped).map(([g,tasks])=>`
+  el.innerHTML=Object.entries(grouped).map(([g,tasks])=>{
+    // The group header label comes from the sort grouping. But the add-row
+    // target group must be the real space name (or General) — never 'Tasks'
+    // which is just a visual label used when group-sort is off.
+    const addTarget=inSpace?spaceName:(sortMode==='group'?g:'General');
+    return `
     <div class="group-section">
       ${multi?`<div class="group-header" onclick="toggleGroup(this)">
         <span class="group-chevron open">▶</span>
@@ -1380,13 +1389,14 @@ function renderList(){
         <span class="group-count">${tasks.length}</span>
       </div>`:''}
       <div class="group-body">
-        <div class="add-row" onclick="openQuickAdd('${esc(g)}')">
+        <div class="add-row" onclick="openQuickAdd('${esc(addTarget)}')">
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5.5 1v9M1 5.5h9"/></svg>
           Add task…
         </div>
         ${tasks.map(t=>renderTaskRow(t)).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderTaskRow(t){
