@@ -2,6 +2,11 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.12 — 2026-04-23
+
+- **Fix: Forgot password flow now actually works.** The reset email sends a link correctly, but clicking it previously just returned the user to the sign-in screen with no visible way to set a new password — the app wasn't listening for the `PASSWORD_RECOVERY` auth event. Now when a user arrives via a reset link, they see a dedicated "Set a new password" screen with two fields (new password + confirm). Once set, they're signed in automatically. Minimum 8 characters; standard confirmation check.
+- This affects every staff member going through initial setup via "Forgot password" — they can now complete their account setup without manual intervention.
+
 ## v1.9.11 — 2026-04-23
 
 - Renamed **"No priority"** to **"⚪ Unsorted"** across the app — in the Add Task dropdown, Edit Task panel, filter pill, and the task row priority chip. The underlying database value (`'none'`) is unchanged; this is a label-only rename. The reframing treats these tasks as an inbox-like triage state rather than a gap — "I haven't decided yet" becomes a first-class category. No migration needed, no data touched.

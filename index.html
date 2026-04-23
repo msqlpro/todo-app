@@ -526,6 +526,24 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
   </div>
 </div>
 
+<!-- PASSWORD RESET -->
+<div id="resetWrap" class="auth-wrap" style="display:none">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <img src="logo.jpg" alt="Brainbox Candy" class="auth-brand-img">
+      <span class="auth-brand-tag">Focal</span>
+    </div>
+    <div class="auth-sub">Set a new password</div>
+    <div style="height:22px"></div>
+    <div class="auth-err" id="resetErr"></div>
+    <label class="field-label">New password</label>
+    <input class="field-input" type="password" id="resetPw1" placeholder="At least 8 characters" autocomplete="new-password">
+    <label class="field-label">Confirm password</label>
+    <input class="field-input" type="password" id="resetPw2" placeholder="Type it again" autocomplete="new-password">
+    <button class="auth-submit" id="resetSubmit" onclick="submitPasswordReset()">Set new password</button>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="appShell" class="shell" style="display:none">
   <aside class="sidebar" id="sidebar">
@@ -899,7 +917,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.11';
+const APP_VERSION='1.9.12';
 const APP_BUILD='2026-04-23';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -948,9 +966,40 @@ let importLines=[];
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
   if(session){user=session.user;showApp();}else showAuth();
-  sb.auth.onAuthStateChange((_,s)=>{
+  sb.auth.onAuthStateChange((event,s)=>{
+    if(event==='PASSWORD_RECOVERY'){
+      // User arrived here via the reset-password link. Show the set-new-password form.
+      showPasswordReset();
+      return;
+    }
     if(s){user=s.user;showApp();}else{user=null;todos=[];showAuth();}
   });
+}
+function showPasswordReset(){
+  document.getElementById('authWrap').style.display='none';
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('resetWrap').style.display='flex';
+  const err=document.getElementById('resetErr');
+  if(err){err.style.display='none';err.textContent='';}
+}
+async function submitPasswordReset(){
+  const p1=document.getElementById('resetPw1').value;
+  const p2=document.getElementById('resetPw2').value;
+  const err=document.getElementById('resetErr');
+  const showErr=m=>{err.textContent=m;err.style.display='block';};
+  if(!p1||p1.length<8){showErr('Password must be at least 8 characters.');return;}
+  if(p1!==p2){showErr('Passwords don\'t match.');return;}
+  const btn=document.getElementById('resetSubmit');
+  btn.disabled=true;btn.textContent='Setting…';
+  const {error}=await sb.auth.updateUser({password:p1});
+  btn.disabled=false;btn.textContent='Set new password';
+  if(error){showErr(error.message);return;}
+  // Success — show a confirmation then flip to app
+  document.getElementById('resetWrap').style.display='none';
+  toast('Password updated — you\'re signed in');
+  // user is already set by Supabase from the recovery session, show the app
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){user=session.user;showApp();}
 }
 function showAuth(){
   document.getElementById('authWrap').style.display='flex';
@@ -985,6 +1034,8 @@ document.getElementById('authSubmit').onclick=async()=>{
   if(r.error)showAuthErr(r.error.message);
 };
 document.getElementById('authPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('authSubmit').click();});
+document.getElementById('resetPw1').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('resetPw2').focus();});
+document.getElementById('resetPw2').addEventListener('keydown',e=>{if(e.key==='Enter')submitPasswordReset();});
 document.getElementById('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('authPass').focus();});
 function showAuthErr(m){const el=document.getElementById('authErr');el.textContent=m;el.style.display='block';}
 function signOut(){sb.auth.signOut();}
