@@ -677,7 +677,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <button class="pill ph" data-f="high" onclick="onFilter(this)">🟠 High</button>
         <button class="pill pm" data-f="medium" onclick="onFilter(this)">🔵 Medium</button>
         <button class="pill pl" data-f="low" onclick="onFilter(this)">🟢 Low</button>
-        <button class="pill" data-f="no_priority" onclick="onFilter(this)">⚪ No priority</button>
+        <button class="pill" data-f="no_priority" onclick="onFilter(this)">⚪ Unsorted</button>
         <button class="pill" data-f="no_due" onclick="onFilter(this)">No date</button>
       </div>
       <div class="tb-spacer2"></div>
@@ -699,7 +699,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
     <input class="qm-input" id="qmTitle" placeholder="What needs to be done?" maxlength="300">
     <div class="qm-row">
       <select class="qm-sel" id="qmPri">
-        <option value="none">— Priority</option>
+        <option value="none">⚪ Unsorted</option>
         <option value="urgent">🔴 Urgent</option>
         <option value="high">🟠 High</option>
         <option value="medium">🔵 Medium</option>
@@ -782,7 +782,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       <div class="panel-field">
         <span class="panel-field-label">Priority</span>
         <select class="panel-select" id="panelPriority">
-          <option value="none">— None</option>
+          <option value="none">⚪ Unsorted</option>
           <option value="urgent">🔴 Urgent</option>
           <option value="high">🟠 High</option>
           <option value="medium">🔵 Medium</option>
@@ -899,7 +899,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.10';
+const APP_VERSION='1.9.11';
 const APP_BUILD='2026-04-23';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1193,7 +1193,7 @@ function fmtDate(d){
   return new Date(d.slice(0,10)+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'});
 }
 function priColor(p){return{urgent:'#dc2626',high:'#d97706',medium:'#2563eb',low:'#16a34a',none:'#cbd5e1'}[p]||'#cbd5e1';}
-function priLabel(p){return{urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'None'}[p]||'None';}
+function priLabel(p){return{urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'⚪ Unsorted'}[p]||'⚪ Unsorted';}
 function spClass(s){return{not_started:'sp-not',in_progress:'sp-prog',stuck:'sp-stuck',done:'sp-done'}[s]||'sp-not';}
 function spLabel(s){return{not_started:'Not Started',in_progress:'In Prog…',stuck:'Stuck',done:'Done'}[s]||'Not Started';}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -2641,7 +2641,7 @@ async function onDrop(e, targetId){
   if(error){toast('Save failed: '+error.message);return;}
 
   if(priorityChanged){
-    const labels={urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'No priority'};
+    const labels={urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:"⚪ Unsorted"};
     registerUndo(`Priority → ${labels[newPriority]}`,async()=>{
       await updateTodo(dragId,{sort_order:oldSortOrder,priority:oldPriority});
     });

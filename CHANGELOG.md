@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.9.11 — 2026-04-23
+
+- Renamed **"No priority"** to **"⚪ Unsorted"** across the app — in the Add Task dropdown, Edit Task panel, filter pill, and the task row priority chip. The underlying database value (`'none'`) is unchanged; this is a label-only rename. The reframing treats these tasks as an inbox-like triage state rather than a gap — "I haven't decided yet" becomes a first-class category. No migration needed, no data touched.
+
 ## v1.9.10 — 2026-04-23
 
 - **New: "No priority" filter pill** on the priority filter row (between 🟢 Low and "No date"). Surfaces tasks that were created without a priority set — previously they were only visible under "All", making them easy to lose once any specific priority filter was active. Handy for reviewing which tasks still need triaging.
