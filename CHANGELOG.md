@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.10.2 — 2026-04-24
+
+- **Fix: drag-reordering within the same priority tier.** Smart sort had no tiebreaker when two tasks had equal priority — so dragging one Urgent task above another Urgent task made the database change but had no visible effect. Smart sort now uses `sort_order` as the tiebreaker, meaning drags within a priority tier land exactly where you drop them. Cross-tier drags (e.g. dragging a Low task into the Urgent area) still inherit priority as before.
+
 ## v1.10.1 — 2026-04-23
 
 - **Fix: drag-and-drop behaviour.** Two related bugs fixed in the reorder flow:

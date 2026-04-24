@@ -930,8 +930,8 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.10.1';
-const APP_BUILD='2026-04-23';
+const APP_VERSION='1.10.2';
+const APP_BUILD='2026-04-24';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
 // Poll version.json on load and every 5 minutes. If the deployed
@@ -1393,7 +1393,10 @@ function getFiltered(){
     if(sortMode==='manual')return(a.sort_order??0)-(b.sort_order??0);
     if(sortMode==='smart'){
       const score=t=>{let s=(PRI[t.priority]??4)*2;if(isOverdue(t))s-=20;else if(isDueSoon(t))s-=8;return s;};
-      return score(a)-score(b);
+      const d=score(a)-score(b);
+      if(d)return d;
+      // Tiebreaker: manual sort order, so drag-reorder works within a tier.
+      return(a.sort_order??0)-(b.sort_order??0);
     }
     if(sortMode==='priority'){
       const d=(PRI[a.priority]??4)-(PRI[b.priority]??4);
