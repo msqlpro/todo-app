@@ -930,7 +930,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.10.0';
+const APP_VERSION='1.10.1';
 const APP_BUILD='2026-04-23';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -2705,63 +2705,81 @@ async function onDrop(e, targetId){
   const tgtTask=todos.find(t=>t.id===targetId);
   if(!srcTask||!tgtTask)return;
 
-  // Source of truth for ordering is the full todos array sorted by sort_order.
-  // The filtered list is only used to find the right visual neighbour for
-  // priority inheritance (what the user actually sees next to the drop).
-  // If any rows have null/undefined sort_order (legacy data), normalise first.
+  // Normalise any legacy rows without sort_order.
   if(todos.some(t=>t.sort_order==null)){
     await rebalanceSortOrders();
   }
+
+  // Priority inheritance is based on the *actual visible neighbour at the drop
+  // location*. When dropping above target, the user is landing between whatever
+  // visible task sits above target and target itself — they inherit from the
+  // nearest neighbour. When dropping below, same idea but the other way.
+  // We look at the currently-rendered filtered list (what the user is seeing),
+  // not the raw todos array, because what the user can see is what matters.
+  const visible=getFiltered();
+  const visTgtIdx=visible.findIndex(t=>t.id===targetId);
+  let neighbour=tgtTask;
+  if(visTgtIdx!==-1){
+    if(dropPosition==='top'){
+      // Drop above target → nearest visible neighbour above is preferred;
+      // falls back to target itself if the dragged task was directly above it.
+      for(let i=visTgtIdx-1;i>=0;i--){
+        if(visible[i].id!==dragId){neighbour=visible[i];break;}
+      }
+    } else {
+      // Drop below target → prefer the target itself as the anchor (user is
+      // landing IMMEDIATELY below target, adjacent). If target is same-priority
+      // as the next visible task too, no ambiguity. If they differ, target wins
+      // because it's the one the user visibly landed next to.
+      neighbour=tgtTask;
+    }
+  }
+  const newPriority=neighbour.priority||'none';
+  const priorityChanged=newPriority!==(srcTask.priority||'none');
+
+  // Sort-order: pick a value between the dropped-to position's prev and next
+  // in the raw todos array (full ordered), so that under manual sort the
+  // position is stable. This is best-effort — under smart/priority sort the
+  // position is derived from priority + due, which changing the priority
+  // will itself update correctly.
   const full=[...todos].sort((a,b)=>(a.sort_order??0)-(b.sort_order??0));
   const fullTgtIdx=full.findIndex(t=>t.id===targetId);
-  if(fullTgtIdx===-1)return;
-
-  // Determine prev/next in the full ordered array, skipping the dragged task.
   let prev=null,next=null;
-  if(dropPosition==='top'){
-    for(let i=fullTgtIdx-1;i>=0;i--){if(full[i].id!==dragId){prev=full[i];break;}}
-    next=tgtTask;
-  } else {
-    prev=tgtTask;
-    for(let i=fullTgtIdx+1;i<full.length;i++){if(full[i].id!==dragId){next=full[i];break;}}
+  if(fullTgtIdx!==-1){
+    if(dropPosition==='top'){
+      for(let i=fullTgtIdx-1;i>=0;i--){if(full[i].id!==dragId){prev=full[i];break;}}
+      next=tgtTask;
+    } else {
+      prev=tgtTask;
+      for(let i=fullTgtIdx+1;i<full.length;i++){if(full[i].id!==dragId){next=full[i];break;}}
+    }
   }
-
-  // Compute new sort_order; rebalance and retry if the gap is exhausted.
   let newSO=pickSortOrderBetween(prev?prev.sort_order:null,next?next.sort_order:null);
   if(newSO==null){
     await rebalanceSortOrders();
     const freshPrev=prev?todos.find(t=>t.id===prev.id):null;
     const freshNext=next?todos.find(t=>t.id===next.id):null;
     newSO=pickSortOrderBetween(freshPrev?freshPrev.sort_order:null,freshNext?freshNext.sort_order:null);
-    if(newSO==null)return; // shouldn't happen after a rebalance
+    if(newSO==null)return;
   }
 
-  // Priority inheritance: when you drop onto a task, the visible neighbour
-  // you're landing next to is that target. Inherit its priority.
-  const newPriority=tgtTask.priority||'none';
-  const priorityChanged=newPriority!==(srcTask.priority||'none');
-
-  // Snapshot for undo before mutating
+  // Snapshot for undo
   const oldSortOrder=srcTask.sort_order;
   const oldPriority=srcTask.priority;
 
-  // Optimistic local update
+  // Optimistic local update — no sort-mode flip. If the user is on smart
+  // sort, the priority change alone will re-rank the task correctly.
   srcTask.sort_order=newSO;
   if(priorityChanged)srcTask.priority=newPriority;
-
-  // Switch to manual sort so the new order is visible
-  sortMode='manual';
-  document.getElementById('sortSel').value='manual';
   render();
 
-  // Single row write (plus priority if it changed)
   const patch={sort_order:newSO};
   if(priorityChanged)patch.priority=newPriority;
   const {error}=await sb.from('todos').update(patch).eq('id',dragId);
   if(error){toast('Save failed: '+error.message);return;}
 
   if(priorityChanged){
-    const labels={urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:"⚪ Unsorted"};
+    const labels={urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'⚪ Unsorted'};
     registerUndo(`Priority → ${labels[newPriority]}`,async()=>{
       await updateTodo(dragId,{sort_order:oldSortOrder,priority:oldPriority});
     });

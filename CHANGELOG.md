@@ -2,6 +2,12 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.10.1 — 2026-04-23
+
+- **Fix: drag-and-drop behaviour.** Two related bugs fixed in the reorder flow:
+  1. Every drop was silently flipping the user's sort mode to "Manual", which could make the list appear to reshuffle wildly. Sort mode is now preserved — under smart/priority sort, changing the task's priority alone is enough to re-rank it correctly.
+  2. Priority inheritance used to key off the task you dropped *on top of*, regardless of where you actually landed. Now it uses the real visible neighbour at the drop position — dropping above a task inherits from the task above it in the visible list; dropping below inherits from the target itself. Matches what the user sees.
+
 ## v1.10.0 — 2026-04-23
 
 Structural improvements — no breaking changes, but meaningful defaults shift.
