@@ -2,6 +2,11 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.10.3 — 2026-04-24
+
+- **Retired "Smart" sort.** It ranked tasks by a hidden priority+urgency score that wasn't predictable — users couldn't tell why things were ordered the way they were. Now removed from the sort dropdown. Any user whose preference was still set to Smart falls through to Priority sort automatically. Priority sort is the new default for new users.
+- **New: daily overdue banner.** First time you load Focal each day, if you have any overdue tasks, an amber banner appears at the top listing them (up to 10), with how many days overdue each one is. Dismissable via the ✕ — and won't reappear until tomorrow. Display-only; you decide what to do with them from the main list.
+
 ## v1.10.2 — 2026-04-24
 
 - **Fix: drag-reordering within the same priority tier.** Smart sort had no tiebreaker when two tasks had equal priority — so dragging one Urgent task above another Urgent task made the database change but had no visible effect. Smart sort now uses `sort_order` as the tiebreaker, meaning drags within a priority tier land exactly where you drop them. Cross-tier drags (e.g. dragging a Low task into the Urgent area) still inherit priority as before.

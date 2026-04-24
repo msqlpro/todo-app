@@ -35,6 +35,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .update-banner:hover{opacity:.92}
 .update-banner-icon{display:inline-block;font-size:15px}
 .update-banner u{text-decoration-thickness:1.5px;text-underline-offset:2px}
+.overdue-banner{background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #ea580c;margin:10px 20px 0;border-radius:8px;padding:10px 14px;font-size:13px;color:#7c2d12}
+.overdue-banner-head{display:flex;align-items:center;gap:8px;font-weight:700}
+.overdue-banner-icon{font-size:14px}
+.overdue-banner-dismiss{border:none;background:transparent;color:#c2410c;padding:0 6px;margin-left:auto;font-size:18px;line-height:1;cursor:pointer;opacity:.7;font-weight:700;border-radius:4px}
+.overdue-banner-dismiss:hover{opacity:1;background:rgba(0,0,0,.06)}
+.overdue-banner-list{list-style:none;margin:6px 0 0;padding:0 0 0 24px}
+.overdue-banner-list li{padding:3px 0;font-weight:500;color:#9a3412;font-size:12px}
+.overdue-banner-list li .od-when{color:#c2410c;font-size:11px;margin-left:6px;font-weight:400}
 
 /* AUTH */
 .auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
@@ -644,6 +652,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       <span class="update-banner-icon">⟳</span>
       <span>A new version is available — <u>click to refresh</u></span>
     </div>
+    <div id="overdueBanner" class="overdue-banner" style="display:none">
+      <div class="overdue-banner-head">
+        <span class="overdue-banner-icon">⚠️</span>
+        <span id="overdueBannerHead"></span>
+        <button class="overdue-banner-dismiss" onclick="dismissOverdueBanner()" title="Dismiss">×</button>
+      </div>
+      <ul class="overdue-banner-list" id="overdueBannerList"></ul>
+    </div>
     <div class="topbar">
       <button class="mob-menu" onclick="document.getElementById('sidebar').classList.toggle('open')">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><rect y="2" width="18" height="2" rx="1"/><rect y="8" width="18" height="2" rx="1"/><rect y="14" width="18" height="2" rx="1"/></svg>
@@ -694,8 +710,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <span style="font-size:12px;font-weight:600;color:var(--text2)">Sort:</span>
         <select class="sort-select" id="sortSel" onchange="onSort()">
           <option value="manual">✋ Manual Order</option>
-          <option value="smart" selected>🧠 Smart</option>
-          <option value="priority">🔴 Priority</option>
+          <option value="priority" selected>🔴 Priority</option>
           <option value="due">📅 Due Date</option>
           <option value="status">📊 Status</option>
           <option value="created">🕐 Created</option>
@@ -927,10 +942,10 @@ const {createClient}=supabase;
 const sb=createClient(SB_URL,SB_KEY);
 
 let todos=[],profiles=[],user=null;
-let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
+let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.10.2';
+const APP_VERSION='1.10.3';
 const APP_BUILD='2026-04-24';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1088,6 +1103,35 @@ async function loadTodos(){
   if(error){setSync('err','error');return;}
   todos=data||[];setSync('live','synced');updateCounts();render();
   checkAssignmentAlerts();
+  checkOverdueBanner();
+}
+function checkOverdueBanner(){
+  if(!user)return;
+  const todayStr=new Date().toISOString().slice(0,10);
+  const key='focal_overdueBannerDismissed_'+user.id;
+  const lastDismissed=localStorage.getItem(key);
+  if(lastDismissed===todayStr)return; // already dismissed today
+  const overdue=todos.filter(t=>!t.done&&t.due_date&&t.due_date.slice(0,10)<todayStr);
+  if(!overdue.length)return;
+  overdue.sort((a,b)=>a.due_date.localeCompare(b.due_date));
+  const box=document.getElementById('overdueBanner');
+  const head=document.getElementById('overdueBannerHead');
+  const list=document.getElementById('overdueBannerList');
+  if(!box||!head||!list)return;
+  const n=overdue.length;
+  head.textContent=n===1?'You have 1 overdue task':`You have ${n} overdue tasks`;
+  list.innerHTML=overdue.slice(0,10).map(t=>{
+    const daysAgo=Math.floor((new Date(todayStr)-new Date(t.due_date.slice(0,10)))/86400000);
+    const when=daysAgo===1?'1 day ago':`${daysAgo} days ago`;
+    return `<li>${esc(t.text)}<span class="od-when">(${when})</span></li>`;
+  }).join('')+(n>10?`<li style="font-style:italic;opacity:.8">…and ${n-10} more</li>`:'');
+  box.style.display='block';
+}
+function dismissOverdueBanner(){
+  const todayStr=new Date().toISOString().slice(0,10);
+  if(user)localStorage.setItem('focal_overdueBannerDismissed_'+user.id,todayStr);
+  const box=document.getElementById('overdueBanner');
+  if(box)box.style.display='none';
 }
 async function loadProfiles(){
   const {data,error}=await sb.from('profiles').select('id,email,display_name');
@@ -1390,14 +1434,10 @@ function getFiltered(){
     }
   }
   list.sort((a,b)=>{
+    // 'smart' is a retired mode — any lingering stored preference falls
+    // through to the priority-sort branch below.
+    if(sortMode==='smart')sortMode='priority';
     if(sortMode==='manual')return(a.sort_order??0)-(b.sort_order??0);
-    if(sortMode==='smart'){
-      const score=t=>{let s=(PRI[t.priority]??4)*2;if(isOverdue(t))s-=20;else if(isDueSoon(t))s-=8;return s;};
-      const d=score(a)-score(b);
-      if(d)return d;
-      // Tiebreaker: manual sort order, so drag-reorder works within a tier.
-      return(a.sort_order??0)-(b.sort_order??0);
-    }
     if(sortMode==='priority'){
       const d=(PRI[a.priority]??4)-(PRI[b.priority]??4);
       if(d)return d;
