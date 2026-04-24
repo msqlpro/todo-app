@@ -2,6 +2,14 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.10.0 — 2026-04-23
+
+Structural improvements — no breaking changes, but meaningful defaults shift.
+
+- **"General" group eliminated.** Tasks created without an explicit group now default to **Work**, not General. Removes a hidden bucket that had no sidebar entry and made tasks look like they'd disappeared. Migrated 25 existing 'General' tasks to 'Work' in the database.
+- **New: filter chips row** above the dashboard. When any view/priority/search filter is active, a row of pills appears reading e.g. `Filtering by [Work space ×] [Urgent ×] ["royalties" ×]`. Click the ✕ on any chip to drop that filter. Solves the "why is my task missing?" confusion — the active filter is now impossible to miss.
+- **Clearer space-delete warning.** Confirm dialog now says "Tasks in this space will move to Work" instead of the non-existent "General".
+
 ## v1.9.13 — 2026-04-23
 
 - Fix: browser autofill was suggesting previously-typed task titles when focussing the Add Task or Edit Task title fields — e.g. typing "t" would pop up "test no priority" from a week ago. Added `autocomplete="off"` and related anti-autofill attributes to both title inputs. Spellcheck remains on. Browsers still differ slightly in how strictly they honour these hints, but Chrome/Safari on Mac stop offering suggestions entirely.

@@ -120,6 +120,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 /* DASH STRIP */
 .dash-strip{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;gap:12px;overflow-x:auto;flex-shrink:0}
 .dash-card{flex-shrink:0;background:var(--surface2);border-radius:10px;padding:10px 14px;min-width:90px;text-align:center}
+
+.filter-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 24px 0;font-size:12px}
+.filter-chips-label{color:var(--text3);font-weight:600;font-size:11px;letter-spacing:.03em;text-transform:uppercase;margin-right:2px}
+.fc-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 4px 3px 9px;border-radius:5px;background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;line-height:1.2;border:1px solid var(--border)}
+.fc-chip.fc-view{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+.fc-chip.fc-priority-urgent{background:var(--urgent-bg);color:var(--urgent);border-color:var(--urgent-border)}
+.fc-chip.fc-priority-high{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+.fc-chip.fc-priority-medium{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+.fc-chip.fc-priority-low{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
+.fc-chip.fc-priority-none{background:var(--surface2);color:var(--text2);border-color:var(--border)}
+.fc-chip.fc-search{background:#fdf2f8;color:#be185d;border-color:#fbcfe8}
+.fc-chip-x{border:none;background:transparent;color:inherit;padding:0 4px;margin-left:2px;font-size:14px;line-height:1;cursor:pointer;opacity:.65;font-weight:700;border-radius:3px}
+.fc-chip-x:hover{opacity:1;background:rgba(0,0,0,.08)}
 .dash-num{font-family:var(--fh);font-size:1.5rem;font-weight:800;line-height:1}
 .dash-label{font-size:11px;color:var(--text2);margin-top:2px;font-weight:500}
 .dash-card.c-prog{background:var(--s-prog-bg)}.dash-card.c-prog .dash-num{color:var(--s-prog)}
@@ -661,6 +674,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       <button class="tb-btn primary" onclick="openQuickAdd()">+ Add Task</button>
     </div>
 
+    <div class="filter-chips" id="filterChips" style="display:none"></div>
+
     <div class="dash-strip">
       <div class="dash-card"><div class="dash-num" id="d-total">0</div><div class="dash-label">Total</div></div>
       <div class="dash-card c-prog"><div class="dash-num" id="d-prog">0</div><div class="dash-label">In Progress</div></div>
@@ -734,7 +749,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       <select class="qm-sel" id="qmGroup">
         <option value="Personal">Personal</option>
         <option value="Work">Work</option>
-        <option value="General">General</option>
         <option value="Home">Home</option>
         <option value="Finance">Finance</option>
         <option value="Health">Health</option>
@@ -823,7 +837,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <select class="panel-select" id="panelGroup">
           <option value="Personal">Personal</option>
           <option value="Work">Work</option>
-          <option value="General">General</option>
           <option value="Home">Home</option>
           <option value="Finance">Finance</option>
           <option value="Health">Health</option>
@@ -917,7 +930,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='smart',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.9.13';
+const APP_VERSION='1.10.0';
 const APP_BUILD='2026-04-23';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1107,7 +1120,7 @@ async function addTodo(f){
     status:f.status||'not_started',
     start_date:f.start_date?f.start_date.slice(0,10):null,
     due_date:f.due_date?f.due_date.slice(0,10):null,notes:f.notes||null,
-    group_name:f.group_name||'General',sort_order:todos.length,
+    group_name:f.group_name||'Work',sort_order:todos.length,
     assigned_to:assignedTo};
   const {data,error}=await sb.from('todos').insert(row).select().single();
   if(error){toast('Error: '+error.message);console.error(error);return;}
@@ -1402,10 +1415,66 @@ function getFiltered(){
 
 // ── RENDER ──────────────────────────────────────────────────────
 function render(){
+  updateFilterChips();
   if(curView==='projects'){renderProjects();return;}
   if(dispMode==='list')renderList();
   else if(dispMode==='board')renderBoard();
   else renderCalendar();
+}
+function updateFilterChips(){
+  const box=document.getElementById('filterChips');
+  if(!box)return;
+  const chips=[];
+  // Current view — only show as a chip if it's a *narrowing* view.
+  // 'all' and the system-default (nothing) are invisible — the user isn't filtering.
+  const viewLabels={
+    today:'Today',upcoming:'Upcoming',overdue:'Overdue',projects:'Projects',
+    inbox:'Inbox',assigned:'Assigned',completed:'Completed',
+    urgent:'Urgent priority',high:'High priority',medium:'Medium priority',low:'Low priority',
+    in_progress:'In Progress',stuck:'Stuck',events:'Events',settings:'Settings'
+  };
+  if(curView&&curView!=='all'&&curView!=='dashboard'){
+    if(curView.startsWith('space_')){
+      const name=curView.slice(6);
+      chips.push({cls:'fc-view',label:name+' space',clearFn:'setViewByKey(\'all\')'});
+    } else if(viewLabels[curView]){
+      // Clicking the chip x goes back to All Tasks
+      const clsMap={urgent:'fc-priority-urgent',high:'fc-priority-high',medium:'fc-priority-medium',low:'fc-priority-low'};
+      chips.push({cls:clsMap[curView]||'fc-view',label:viewLabels[curView],clearFn:'setViewByKey(\'all\')'});
+    }
+  }
+  // Priority filter pill (the row above the task list)
+  if(filterMode&&filterMode!=='all'){
+    const pMap={urgent:['Urgent','fc-priority-urgent'],high:['High','fc-priority-high'],medium:['Medium','fc-priority-medium'],low:['Low','fc-priority-low'],no_priority:['Unsorted','fc-priority-none'],no_due:['No date','fc-view']};
+    const p=pMap[filterMode];
+    if(p)chips.push({cls:p[1],label:p[0],clearFn:'clearPriorityFilter()'});
+  }
+  // Active search query
+  if(searchQ){
+    chips.push({cls:'fc-search',label:'"'+esc(searchQ)+'"',clearFn:'clearSearch()'});
+  }
+  if(!chips.length){
+    box.style.display='none';
+    box.innerHTML='';
+    return;
+  }
+  box.style.display='flex';
+  box.innerHTML='<span class="filter-chips-label">Filtering by</span>'+
+    chips.map(c=>`<span class="fc-chip ${c.cls}">${esc(c.label)}<button class="fc-chip-x" onclick="${c.clearFn}" title="Remove this filter">×</button></span>`).join('');
+}
+function setViewByKey(key){
+  const btn=document.querySelector(`[data-view="${key}"]`);
+  if(btn)setView(btn);
+}
+function clearPriorityFilter(){
+  const btn=document.querySelector('[data-f="all"]');
+  if(btn)onFilter(btn);
+}
+function clearSearch(){
+  searchQ='';
+  const el=document.getElementById('searchInput');
+  if(el)el.value='';
+  render();
 }
 function renderList(){
   const list=getFiltered();
@@ -1413,10 +1482,10 @@ function renderList(){
   // Determine which group the quick-add should target. If we're inside a
   // space, always use the space name — regardless of what the sort mode
   // chose to label the group as (e.g. 'Tasks' under smart sort). Otherwise
-  // default to 'General' when the list is empty.
+  // default to 'Work' when the list is empty (it's the most common choice).
   const inSpace=curView&&curView.startsWith('space_');
   const spaceName=inSpace?curView.slice(6):null;
-  const defaultGroup=spaceName||'General';
+  const defaultGroup=spaceName||'Work';
   const addRowHtml=`<div class="add-row" onclick="openQuickAdd('${esc(defaultGroup)}')">
     <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5.5 1v9M1 5.5h9"/></svg>
     Add task…
@@ -1427,13 +1496,13 @@ function renderList(){
     return;
   }
   const grouped={};
-  list.forEach(t=>{const g=sortMode==='group'?(t.group_name||'General'):'Tasks';if(!grouped[g])grouped[g]=[];grouped[g].push(t);});
+  list.forEach(t=>{const g=sortMode==='group'?(t.group_name||'Work'):'Tasks';if(!grouped[g])grouped[g]=[];grouped[g].push(t);});
   const multi=Object.keys(grouped).length>1;
   el.innerHTML=Object.entries(grouped).map(([g,tasks])=>{
     // The group header label comes from the sort grouping. But the add-row
-    // target group must be the real space name (or General) — never 'Tasks'
+    // target group must be the real space name (or Work) — never 'Tasks'
     // which is just a visual label used when group-sort is off.
-    const addTarget=inSpace?spaceName:(sortMode==='group'?g:'General');
+    const addTarget=inSpace?spaceName:(sortMode==='group'?g:'Work');
     return `
     <div class="group-section">
       ${multi?`<div class="group-header" onclick="toggleGroup(this)">
@@ -1702,7 +1771,7 @@ function openPanel(id){
   document.getElementById('panelStart').value=t.start_date?t.start_date.slice(0,10):'';
   document.getElementById('panelDue').value=t.due_date?t.due_date.slice(0,10):'';
   document.getElementById('panelNotes').value=t.notes||'';
-  document.getElementById('panelGroup').value=t.group_name||'General';
+  document.getElementById('panelGroup').value=t.group_name||'Work';
   // Populate Assigned-to picker — show every OTHER user, whether they own it or not.
   // A viewer who is the assignee needs to be able to hand it back to the owner.
   const sel=document.getElementById('panelAssignedTo');
@@ -1876,7 +1945,7 @@ async function savePanel(){
     start_date:document.getElementById('panelStart').value?document.getElementById('panelStart').value.slice(0,10):null,
     due_date:document.getElementById('panelDue').value?document.getElementById('panelDue').value.slice(0,10):null,
     notes:document.getElementById('panelNotes').value||null,
-    group_name:document.getElementById('panelGroup').value||'General',
+    group_name:document.getElementById('panelGroup').value||'Work',
     assigned_to:newAssignedTo,
     completed_at:status==='done'?new Date().toISOString():null,
   };
@@ -1985,7 +2054,7 @@ async function submitQuickAdd(){
     status:document.getElementById('qmStat').value,
     start_date:document.getElementById('qmStart').value||null,
     due_date:document.getElementById('qmDue').value||null,
-    group_name:document.getElementById('qmGroup').value||'General',
+    group_name:document.getElementById('qmGroup').value||'Work',
     assigned_to:document.getElementById('qmAssign').value||null});
   closeQuickAdd();
 }
@@ -2307,8 +2376,8 @@ async function addSpace(){
 }
 
 async function deleteSpace(id,name){
-  if(!confirm('Delete space "'+name+'"? Tasks in this space will move to General.'))return;
-  await sb.from('todos').update({group_name:'General'}).eq('group_name',name).eq('user_id',user.id);
+  if(!confirm('Delete space "'+name+'"? Tasks in this space will move to Work.'))return;
+  await sb.from('todos').update({group_name:'Work'}).eq('group_name',name).eq('user_id',user.id);
   await sb.from('spaces').delete().eq('id',id);
   spaces=spaces.filter(s=>s.id!==id);
   await loadTodos();
