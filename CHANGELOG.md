@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.10.4 — 2026-04-24
+
+- **Fix: drag-reorder within Urgent (and any priority tier) not respecting position.** Under Priority sort, the comparator was using due_date as the in-tier tiebreaker before sort_order. That meant dated Urgent tasks always floated above un-dated ones, regardless of any drag reorder attempts. Swapped the order: sort_order now wins within a tier (drag intent matters more than automatic date inference). Due_date only kicks in as a secondary signal for tasks at identical sort_order positions. Dragging a task to the top of Urgent now sticks.
+
 ## v1.10.3 — 2026-04-24
 
 - **Retired "Smart" sort.** It ranked tasks by a hidden priority+urgency score that wasn't predictable — users couldn't tell why things were ordered the way they were. Now removed from the sort dropdown. Any user whose preference was still set to Smart falls through to Priority sort automatically. Priority sort is the new default for new users.
