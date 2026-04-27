@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Brainbox Candy · Focal</title>
+<title>Brainbox Candy · Tadoo</title>
 <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -528,7 +528,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
   <div class="auth-card">
     <div class="auth-brand">
       <img src="logo.jpg" alt="Brainbox Candy" class="auth-brand-img">
-      <span class="auth-brand-tag">Focal</span>
+      <span class="auth-brand-tag">Tadoo</span>
     </div>
     <div class="auth-sub">The Brainbox Candy task manager</div>
     <div style="height:22px"></div>
@@ -542,7 +542,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       <button type="button" id="forgotLink" style="background:none;border:none;color:var(--text2);font-size:12px;font-family:var(--fb);cursor:pointer;text-decoration:underline;padding:4px">Forgot password?</button>
     </div>
     <div style="text-align:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
-      <div style="font-size:11px;color:var(--text3);line-height:1.5">Focal is for Brainbox Candy staff.<br>Need access? Ask Mark.</div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.5">Tadoo is for Brainbox Candy staff.<br>Need access? Ask Mark.</div>
     </div>
   </div>
 </div>
@@ -552,7 +552,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
   <div class="auth-card">
     <div class="auth-brand">
       <img src="logo.jpg" alt="Brainbox Candy" class="auth-brand-img">
-      <span class="auth-brand-tag">Focal</span>
+      <span class="auth-brand-tag">Tadoo</span>
     </div>
     <div class="auth-sub">Set a new password</div>
     <div style="height:22px"></div>
@@ -569,7 +569,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 <div id="appShell" class="shell" style="display:none">
   <aside class="sidebar" id="sidebar">
     <div class="sb-head">
-      <div class="sb-logo"><img src="logo.jpg" alt="Brainbox Candy" class="sb-logo-img"><span class="sb-logo-tag">Focal</span></div>
+      <div class="sb-logo"><img src="logo.jpg" alt="Brainbox Candy" class="sb-logo-img"><span class="sb-logo-tag">Tadoo</span></div>
       <div class="sb-sync"><div class="sync-dot" id="syncDot"></div><span id="syncLabel">connecting…</span></div>
     </div>
     <div class="sb-sec">
@@ -945,7 +945,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.10.4';
+const APP_VERSION='1.10.5';
 const APP_BUILD='2026-04-24';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1073,7 +1073,7 @@ function toggleUserMenu(e){
   if(el)el.classList.toggle('open');
 }
 function signOutConfirm(){
-  const ok=confirm('Sign out of Focal?');
+  const ok=confirm('Sign out of Tadoo?');
   if(ok)signOut();
 }
 document.addEventListener('click',e=>{

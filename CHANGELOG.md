@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.10.5 — 2026-04-24
+
+- **Renamed Focal → Tadoo** across all user-facing UI: page title, auth screen brand pill, password-reset screen brand pill, sidebar logo, sign-out confirm dialog, "Focal is for Brainbox Candy staff" footer. Internal localStorage keys (`focal_overdueBannerDismissed_*`, `focalFontSize`) are unchanged on purpose — renaming them would wipe everyone's saved preferences. The repo, GitHub URL, and database keys also stay as-is; the rename is a presentation-layer change only.
+
 ## v1.10.4 — 2026-04-24
 
 - **Fix: drag-reorder within Urgent (and any priority tier) not respecting position.** Under Priority sort, the comparator was using due_date as the in-tier tiebreaker before sort_order. That meant dated Urgent tasks always floated above un-dated ones, regardless of any drag reorder attempts. Swapped the order: sort_order now wins within a tier (drag intent matters more than automatic date inference). Due_date only kicks in as a secondary signal for tasks at identical sort_order positions. Dragging a task to the top of Urgent now sticks.
