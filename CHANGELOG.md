@@ -2,6 +2,11 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.10.7 — 2026-05-22
+
+- Add Task button: bigger again — 15px / 10×20 padding, gradient fill, stronger shadow, circular "+" badge to anchor the eye
+- v1.10.6 changes weren't punchy enough; this version goes further
+
 ## v1.10.6 — 2026-05-22
 
 - Add Task button: bumped padding, weight, font size, and added a soft orange shadow so it reads as the primary action in the toolbar
