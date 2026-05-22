@@ -2,6 +2,11 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.10.6 — 2026-05-22
+
+- Add Task button: bumped padding, weight, font size, and added a soft orange shadow so it reads as the primary action in the toolbar
+- Hover state lifts the button slightly instead of just dimming
+
 ## v1.10.5 — 2026-04-24
 
 - **Renamed Focal → Tadoo** across all user-facing UI: page title, auth screen brand pill, password-reset screen brand pill, sidebar logo, sign-out confirm dialog, "Focal is for Brainbox Candy staff" footer. Internal localStorage keys (`focal_overdueBannerDismissed_*`, `focalFontSize`) are unchanged on purpose — renaming them would wipe everyone's saved preferences. The repo, GitHub URL, and database keys also stay as-is; the rename is a presentation-layer change only.

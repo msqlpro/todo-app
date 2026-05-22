@@ -122,8 +122,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .view-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 .tb-btn{display:flex;align-items:center;gap:5px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);padding:6px 11px;font-family:var(--fb);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .tb-btn:hover{border-color:var(--border2);color:var(--text)}
-.tb-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-.tb-btn.primary:hover{opacity:.9}
+.tb-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;font-size:14px;padding:8px 16px;gap:7px;box-shadow:0 2px 6px rgba(232,87,26,0.35),0 1px 2px rgba(232,87,26,0.25);letter-spacing:.1px}
+.tb-btn.primary:hover{background:#f06424;border-color:#f06424;box-shadow:0 4px 10px rgba(232,87,26,0.45),0 2px 4px rgba(232,87,26,0.3);transform:translateY(-1px)}
+.tb-btn.primary:active{transform:translateY(0);box-shadow:0 1px 3px rgba(232,87,26,0.35)}
 
 /* DASH STRIP */
 .dash-strip{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;gap:12px;overflow-x:auto;flex-shrink:0}
@@ -945,7 +946,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.10.5';
+const APP_VERSION='1.10.6';
 const APP_BUILD='2026-04-24';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
