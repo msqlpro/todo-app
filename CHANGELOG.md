@@ -2,6 +2,12 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.11.1 — 2026-05-22
+
+- New Task Assigned popup: moved from top-right slide-in to centre-screen modal with backdrop
+- No more auto-dismiss — stays on screen until the recipient clicks Dismiss, Open Task, or the ×
+- Bigger card with the task text shown clearly in its own box
+
 ## v1.11.0 — 2026-05-22
 
 - New task assignment popup: when someone assigns a task to you (or hands one to you), a slide-in notification appears top-right of your screen saying "New Task Assigned" with the sender name and task text
