@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.10.8 — 2026-05-22
+
+- Inline "+ Add task…" row: text now full black and bold (was muted grey)
+
 ## v1.10.7 — 2026-05-22
 
 - Add Task button: bigger again — 15px / 10×20 padding, gradient fill, stronger shadow, circular "+" badge to anchor the eye

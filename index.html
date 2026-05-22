@@ -181,7 +181,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .group-chevron.open{transform:rotate(90deg)}
 .group-body{display:flex;flex-direction:column;gap:3px;min-width:0;width:100%}
 .group-body.collapsed{display:none}
-.add-row{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surface);border:1.5px dashed var(--border);border-radius:8px;cursor:text;color:var(--text3);font-size:13px;transition:all .15s;margin-bottom:3px}
+.add-row{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surface);border:1.5px dashed var(--border);border-radius:8px;cursor:text;color:var(--text);font-size:13px;font-weight:700;transition:all .15s;margin-bottom:3px}
 .add-row:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 
 /* TASK ROW */
@@ -947,7 +947,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.10.7';
+const APP_VERSION='1.10.8';
 const APP_BUILD='2026-04-24';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
