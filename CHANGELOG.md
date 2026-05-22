@@ -2,6 +2,12 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.11.0 — 2026-05-22
+
+- New task assignment popup: when someone assigns a task to you (or hands one to you), a slide-in notification appears top-right of your screen saying "New Task Assigned" with the sender name and task text
+- Click the popup to open the task. × to dismiss. Auto-dismisses after 7 seconds
+- Triggers on both INSERT (newly created and assigned) and UPDATE (reassigned to you). Won't fire if you assign a task to yourself
+
 ## v1.10.9 — 2026-05-22
 
 - Toolbar "+ Add Task" button: dialled back from the v1.10.7 gradient/badge treatment. Back to flat orange with just a subtle shadow — same size as the other toolbar buttons
