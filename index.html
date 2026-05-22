@@ -414,17 +414,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 /* ASSIGNMENT NOTIFICATION — centred modal */
 .assign-notif-bg{position:fixed;inset:0;background:rgba(20,20,30,0.55);backdrop-filter:blur(2px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
 .assign-notif-bg.show{opacity:1;pointer-events:auto}
-.assign-notif{background:var(--surface);border-radius:14px;padding:32px 36px 24px;width:min(440px,calc(100vw - 40px));box-shadow:0 24px 60px rgba(0,0,0,0.35),0 8px 20px rgba(0,0,0,0.2);position:relative;text-align:center;transform:scale(.92);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.assign-notif{background:var(--surface);border-radius:10px;padding:20px 22px 16px;width:min(270px,calc(100vw - 40px));box-shadow:0 24px 60px rgba(0,0,0,0.35),0 8px 20px rgba(0,0,0,0.2);position:relative;text-align:center;transform:scale(.92);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
 .assign-notif-bg.show .assign-notif{transform:scale(1)}
-.assign-notif-x{position:absolute;top:10px;right:12px;border:none;background:transparent;color:var(--text3);font-size:24px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:6px}
+.assign-notif-x{position:absolute;top:6px;right:8px;border:none;background:transparent;color:var(--text3);font-size:18px;line-height:1;cursor:pointer;padding:3px 6px;border-radius:5px}
 .assign-notif-x:hover{color:var(--text);background:var(--surface2)}
-.assign-notif-icon{font-size:42px;line-height:1;margin-bottom:12px}
-.assign-notif-title{font-weight:700;font-size:20px;color:var(--text);margin-bottom:6px}
-.assign-notif-from{font-size:13px;color:var(--text2);margin-bottom:16px}
+.assign-notif-icon{font-size:26px;line-height:1;margin-bottom:8px}
+.assign-notif-title{font-weight:700;font-size:15px;color:var(--text);margin-bottom:4px}
+.assign-notif-from{font-size:11px;color:var(--text2);margin-bottom:10px}
 .assign-notif-from span{font-weight:600;color:var(--text)}
-.assign-notif-text{font-size:15px;color:var(--text);background:var(--surface2);border-radius:8px;padding:12px 14px;margin-bottom:22px;line-height:1.4;word-break:break-word}
-.assign-notif-actions{display:flex;gap:10px;justify-content:center}
-.assign-notif-btn{border:1.5px solid var(--border);border-radius:8px;padding:9px 18px;font-family:var(--fb);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.assign-notif-text{font-size:13px;color:var(--text);background:var(--surface2);border-radius:6px;padding:8px 10px;margin-bottom:14px;line-height:1.35;word-break:break-word}
+.assign-notif-actions{display:flex;gap:7px;justify-content:center}
+.assign-notif-btn{border:1.5px solid var(--border);border-radius:6px;padding:6px 12px;font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
 .assign-notif-btn.secondary{background:var(--surface);color:var(--text2)}
 .assign-notif-btn.secondary:hover{background:var(--surface2);color:var(--text)}
 .assign-notif-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -980,7 +980,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.11.1';
+const APP_VERSION='1.11.2';
 const APP_BUILD='2026-04-24';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────

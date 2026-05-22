@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.11.2 — 2026-05-22
+
+- New Task Assigned popup: shrunk ~40% — narrower card, smaller icon/title/text/buttons. Still centred, still requires explicit dismissal
+
 ## v1.11.1 — 2026-05-22
 
 - New Task Assigned popup: moved from top-right slide-in to centre-screen modal with backdrop
