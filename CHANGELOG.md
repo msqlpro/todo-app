@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.10.9 — 2026-05-22
+
+- Toolbar "+ Add Task" button: dialled back from the v1.10.7 gradient/badge treatment. Back to flat orange with just a subtle shadow — same size as the other toolbar buttons
+
 ## v1.10.8 — 2026-05-22
 
 - Inline "+ Add task…" row: text now full black and bold (was muted grey)
