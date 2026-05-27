@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.11.4 — 2026-05-27
+
+- Bug fix: when a non-owner (e.g. an assignee) reassigned a task back to the owner AND edited the notes (or status, priority, dates, etc.) in the same save, only the reassignment was being saved — the other edits were silently dropped. Now all edits go through together via an extended `reassign_todo` RPC. This is why "handback notes" from Emma/Nicky/etc. weren't showing up
+
 ## v1.11.3 — 2026-05-27
 
 - New tasks now land at the TOP of their bucket instead of the bottom. In priority sort mode that means a new "urgent" task appears at the top of the urgent group, a new "high" at the top of high, etc. In manual sort mode new tasks land at the very top of the list

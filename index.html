@@ -980,7 +980,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.11.3';
+const APP_VERSION='1.11.4';
 const APP_BUILD='2026-04-24';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -2048,7 +2048,23 @@ async function savePanel(){
   const iAmOwner=user&&pre.user_id===user.id;
   const assignedToChanged=newAssignedTo!==pre.assigned_to;
   if(!iAmOwner&&assignedToChanged){
-    const {data:rpcData,error:rpcErr}=await sb.rpc('reassign_todo',{p_id:panelId,p_new_assigned_to:newAssignedTo});
+    // Pass all editable fields through the RPC so a non-owner's edits
+    // (notes, status, priority, dates, text, group) save together with
+    // the reassignment instead of being silently dropped.
+    const statusVal=document.getElementById('panelStatus').value;
+    const rpcArgs={
+      p_id:panelId,
+      p_new_assigned_to:newAssignedTo,
+      p_text:txt,
+      p_status:statusVal,
+      p_priority:document.getElementById('panelPriority').value,
+      p_start_date:document.getElementById('panelStart').value?document.getElementById('panelStart').value.slice(0,10):null,
+      p_due_date:document.getElementById('panelDue').value?document.getElementById('panelDue').value.slice(0,10):null,
+      p_notes:document.getElementById('panelNotes').value||null,
+      p_group_name:document.getElementById('panelGroup').value||'Work',
+      p_update_other_fields:true
+    };
+    const {data:rpcData,error:rpcErr}=await sb.rpc('reassign_todo',rpcArgs);
     if(rpcErr){
       toast("Couldn't reassign: "+rpcErr.message);
       console.error('reassign_todo failed',rpcErr);
