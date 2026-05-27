@@ -2,6 +2,11 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.11.3 — 2026-05-27
+
+- New tasks now land at the TOP of their bucket instead of the bottom. In priority sort mode that means a new "urgent" task appears at the top of the urgent group, a new "high" at the top of high, etc. In manual sort mode new tasks land at the very top of the list
+- Bulk imports follow the same rule: imported tasks appear above the current top, with the first imported item highest
+
 ## v1.11.2 — 2026-05-22
 
 - New Task Assigned popup: shrunk ~40% — narrower card, smaller icon/title/text/buttons. Still centred, still requires explicit dismissal
