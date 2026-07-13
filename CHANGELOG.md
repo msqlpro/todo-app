@@ -2,6 +2,17 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.13.0 — 2026-07-13
+
+- **Two kinds of repeat.** Every repeating task now picks how its next occurrence arrives:
+  - **"appears when I tick this off"** (the existing behaviour, still the default) — next one is due *completion date + interval*. Right for chores where the clock restarts when the work actually happened: koi filter every 97 days, whenever you get to it
+  - **"appears on schedule, ticked or not"** — a proper calendar. The next one lands on its date whether or not you finished the last one. Miss a week and last week's stays in your list, overdue, while this week's arrives. Right for anything with a real deadline: VAT return, weekly Faire reorder call
+- Fixed-schedule tasks are created by a nightly Postgres job (`pg_cron`, 05:10 UTC), so they appear whether or not anyone has Tadoo open. The app also sweeps on load and on tab focus, so a due task shows up immediately rather than waiting for the next run
+- Missed fixed occurrences don't pile up: ignore a daily task for a month and you get *today's* copy, not thirty. The stale one stays put, overdue
+- Fixed-schedule tasks use the due date as their calendar anchor. Move the due date and the schedule follows it
+- Badges distinguish the two: `↻ every 97 days | ~18 Oct` (projected, moves with you) vs `📅 every week | next 20 Jul` (firm date)
+- DB: `repeat_mode`, `repeat_series_id`, `occurrence_date` on `todos`; `spawn_due_recurrences()` and `add_repeat_interval()` functions; unique index on (series, occurrence date) so the cron and multiple devices can't create duplicate copies
+
 ## v1.12.1 — 2026-07-13
 
 - Repeating tasks now show the next repeat date on the task row, e.g. `↻ every 97 days | ~18 Oct`

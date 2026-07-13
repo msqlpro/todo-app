@@ -220,7 +220,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
   font-size:9.5px;font-weight:700;letter-spacing:.02em;vertical-align:middle;white-space:nowrap;
   background:var(--border2);color:var(--text2);opacity:.9}
 .done-row .repeat-badge{opacity:.5}
-.repeat-next{margin-left:5px;padding-left:5px;border-left:1px solid var(--text3);opacity:.75;font-weight:600}
+.rb-fixed{background:color-mix(in srgb,var(--medium) 16%,transparent);color:var(--medium)}
+.repeat-next{margin-left:5px;padding-left:5px;border-left:1px solid currentColor;opacity:.75;font-weight:600}
 @media(max-width:640px){.repeat-next{display:none}}
 .due-chip{font-size:11px;font-weight:600;border-radius:6px;padding:3px 6px;white-space:nowrap;cursor:pointer;transition:opacity .15s;max-width:90px;overflow:hidden;text-overflow:ellipsis}
 .due-chip:hover{opacity:.75}
@@ -791,7 +792,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <option value="done">Done</option>
       </select>
       <input class="qm-date" type="date" id="qmStart" title="Start date (fill both Start and Due to show in Projects)" placeholder="Start" onfocus="defaultToToday(this)">
-      <input class="qm-date" type="date" id="qmDue" title="Due date">
+      <input class="qm-date" type="date" id="qmDue" title="Due date" onchange="onRepeatChange('qm')">
       <select class="qm-sel" id="qmGroup">
         <option value="Personal">Personal</option>
         <option value="Work">Work</option>
@@ -822,6 +823,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <option value="6:month">Every 6 months</option>
         <option value="1:year">Every year</option>
         <option value="custom">Custom…</option>
+      </select>
+    </div>
+    <div class="qm-row" id="qmRepeatMode" style="margin-top:-2px;display:none">
+      <span style="font-size:12px;color:var(--text2);font-weight:600;white-space:nowrap">Next one</span>
+      <select class="qm-sel" id="qmRepeatModeSel" style="flex:1" onchange="onRepeatChange('qm')">
+        <option value="on_complete">appears when I tick this off</option>
+        <option value="fixed">appears on schedule, ticked or not</option>
       </select>
     </div>
     <div class="qm-row" id="qmRepeatCustom" style="margin-top:-2px;display:none">
@@ -937,6 +945,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
           <option value="1:year">Every year</option>
           <option value="custom">Custom…</option>
         </select>
+        <div id="panelRepeatMode" style="display:none;margin-top:8px">
+          <span style="font-size:11px;color:var(--text3);font-weight:600;display:block;margin-bottom:4px">Next one</span>
+          <select class="panel-select" id="panelRepeatModeSel" onchange="onRepeatChange('panel')">
+            <option value="on_complete">appears when I tick this off</option>
+            <option value="fixed">appears on schedule, ticked or not</option>
+          </select>
+        </div>
         <div id="panelRepeatCustom" style="display:none;gap:8px;margin-top:8px;align-items:center">
           <span style="font-size:12px;color:var(--text2);font-weight:600;white-space:nowrap">Every</span>
           <input class="panel-select" type="number" id="panelRepeatN" min="1" max="999" value="97" style="width:80px;text-align:center">
@@ -1045,7 +1060,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.12.1';
+const APP_VERSION='1.13.0';
 const APP_BUILD='2026-07-13';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1169,6 +1184,28 @@ function showAuth(){
   const err=document.getElementById('authErr');
   if(err){err.style.display='none';err.textContent='';}
 }
+// Fixed-schedule occurrences are created nightly by pg_cron. But if you open
+// Tadoo before the job has run — or the app has been sitting open across
+// midnight — call it directly so a due task appears now rather than tomorrow.
+// It's idempotent (unique index on series+date), so this can't double up with
+// the cron or with another device.
+let lastSpawnSweep=0;
+async function sweepFixedRecurrences(force){
+  if(!user)return;
+  const now=Date.now();
+  if(!force&&now-lastSpawnSweep<5*60*1000)return; // at most every 5 min
+  lastSpawnSweep=now;
+  try{
+    const {data,error}=await sb.rpc('spawn_due_recurrences');
+    if(error){console.warn('spawn_due_recurrences failed',error);return;}
+    if(data&&data>0)await loadTodos();
+  }catch(e){console.warn('spawn_due_recurrences threw',e);}
+}
+// Catch the app being left open overnight.
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')sweepFixedRecurrences(false);
+});
+
 function showApp(){
   document.getElementById('authWrap').style.display='none';
   document.getElementById('appShell').style.display='flex';
@@ -1180,6 +1217,7 @@ function showApp(){
   const wa=document.getElementById('tbWhoami');
   if(wa){wa.textContent=first;wa.title='Signed in as '+e;}
   loadTodos();loadEvents();loadSpaces();loadProfiles();subscribeRealtime();
+  sweepFixedRecurrences(true);
 }
 document.getElementById('authSubmit').onclick=async()=>{
   const email=document.getElementById('authEmail').value.trim();
@@ -1297,26 +1335,31 @@ const REPEAT_UNITS={day:'day',week:'week',month:'month',year:'year'};
 
 // Read the repeat controls for a given prefix ('qm' = quick add, 'panel' = detail panel)
 function readRepeat(prefix){
+  const NONE={repeat_interval:null,repeat_unit:null,repeat_mode:'on_complete'};
   const sel=document.getElementById(prefix+'Repeat');
-  if(!sel)return{repeat_interval:null,repeat_unit:null};
+  if(!sel)return NONE;
   const v=sel.value;
-  if(!v)return{repeat_interval:null,repeat_unit:null};
+  if(!v)return NONE;
+  const modeSel=document.getElementById(prefix+'RepeatModeSel');
+  const mode=(modeSel&&modeSel.value==='fixed')?'fixed':'on_complete';
   if(v==='custom'){
     let n=parseInt(document.getElementById(prefix+'RepeatN').value,10);
     const u=document.getElementById(prefix+'RepeatUnit').value;
     if(!Number.isFinite(n)||n<1)n=1;
     if(n>999)n=999;
-    if(!REPEAT_UNITS[u])return{repeat_interval:null,repeat_unit:null};
-    return{repeat_interval:n,repeat_unit:u};
+    if(!REPEAT_UNITS[u])return NONE;
+    return{repeat_interval:n,repeat_unit:u,repeat_mode:mode};
   }
   const[n,u]=v.split(':');
-  return{repeat_interval:parseInt(n,10),repeat_unit:u};
+  return{repeat_interval:parseInt(n,10),repeat_unit:u,repeat_mode:mode};
 }
 
 // Push the stored repeat values back into the controls
-function writeRepeat(prefix,interval,unit){
+function writeRepeat(prefix,interval,unit,mode){
   const sel=document.getElementById(prefix+'Repeat');
   if(!sel)return;
+  const modeSel=document.getElementById(prefix+'RepeatModeSel');
+  if(modeSel)modeSel.value=(mode==='fixed')?'fixed':'on_complete';
   if(!interval||!unit){sel.value='';onRepeatChange(prefix);return;}
   const preset=interval+':'+unit;
   const known=Array.from(sel.options).some(o=>o.value===preset);
@@ -1346,6 +1389,14 @@ function fmtDateAbs(iso){
 // differently so the moving one doesn't look like a firm commitment.
 function nextRepeatDate(t){
   if(!t||!t.repeat_interval||!t.repeat_unit)return null;
+  if(t.repeat_mode==='fixed'){
+    // Fixed: the calendar counts from the anchor date, completion is irrelevant.
+    const anchor=t.occurrence_date||t.due_date;
+    if(!anchor)return null;
+    return isoDate(addInterval(new Date(anchor.slice(0,10)+'T00:00:00'),t.repeat_interval,t.repeat_unit));
+  }
+  // On-complete: counts from when it's actually ticked off (projected as today
+  // while it's still open).
   const base=(t.done&&t.completed_at)?new Date(t.completed_at):new Date();
   return isoDate(addInterval(base,t.repeat_interval,t.repeat_unit));
 }
@@ -1359,20 +1410,31 @@ function repeatLabel(interval,unit){
 function onRepeatChange(prefix){
   const sel=document.getElementById(prefix+'Repeat');
   const box=document.getElementById(prefix+'RepeatCustom');
+  const modeRow=document.getElementById(prefix+'RepeatMode');
   const hint=document.getElementById(prefix+'RepeatHint');
   if(!sel)return;
-  const isCustom=sel.value==='custom';
-  if(box)box.style.display=isCustom?'flex':'none';
-  if(hint){
-    const r=readRepeat(prefix);
-    if(r.repeat_interval){
-      const proj=fmtDateAbs(isoDate(addInterval(new Date(),r.repeat_interval,r.repeat_unit)));
-      hint.textContent='Tick this off today and the next one is due '+proj+'. The date shifts with you \u2014 it\u2019s always '+repeatLabel(r.repeat_interval,r.repeat_unit).replace(/^every /,'')+' from whenever you actually complete it.';
-      hint.style.display='block';
+  const repeats=!!sel.value;
+  if(box)box.style.display=(sel.value==='custom')?'flex':'none';
+  if(modeRow)modeRow.style.display=repeats?(prefix==='qm'?'flex':'block'):'none';
+  if(!hint)return;
+  const r=readRepeat(prefix);
+  if(!r.repeat_interval){hint.style.display='none';return;}
+  const every=repeatLabel(r.repeat_interval,r.repeat_unit).replace(/^every /,'');
+  if(r.repeat_mode==='fixed'){
+    // Fixed mode anchors on the due date, so it needs one.
+    const dueEl=document.getElementById(prefix==='qm'?'qmDue':'panelDue');
+    const due=dueEl&&dueEl.value;
+    if(due){
+      const nxt=fmtDateAbs(isoDate(addInterval(new Date(due+'T00:00:00'),r.repeat_interval,r.repeat_unit)));
+      hint.textContent='Fixed schedule: the next one appears on '+nxt+' whether or not you\u2019ve ticked this one off. A missed one stays in your list, overdue.';
     }else{
-      hint.style.display='none';
+      hint.textContent='Fixed schedule needs a due date \u2014 that\u2019s the anchor the calendar counts from. Set one above, or it\u2019ll start from today.';
     }
+  }else{
+    const proj=fmtDateAbs(isoDate(addInterval(new Date(),r.repeat_interval,r.repeat_unit)));
+    hint.textContent='Tick this off today and the next one is due '+proj+'. The date shifts with you \u2014 it\u2019s always '+every+' from whenever you actually complete it.';
   }
+  hint.style.display='block';
 }
 
 // Add `interval` units to a Date. Month/year arithmetic clamps to the end of the
@@ -1411,7 +1473,8 @@ async function spawnNextOccurrence(t){
     start_date:null,due_date:isoDate(next),
     notes:t.notes||null,group_name:t.group_name||'Work',
     sort_order:minSO-1000,assigned_to:t.assigned_to||null,
-    repeat_interval:t.repeat_interval,repeat_unit:t.repeat_unit
+    repeat_interval:t.repeat_interval,repeat_unit:t.repeat_unit,
+    repeat_mode:'on_complete'
   };
   const {data,error}=await sb.from('todos').insert(row).select().single();
   if(error){
@@ -1448,7 +1511,8 @@ async function addTodo(f){
     due_date:f.due_date?f.due_date.slice(0,10):null,notes:f.notes||null,
     group_name:f.group_name||'Work',sort_order:minSO-1000,
     assigned_to:assignedTo,
-    repeat_interval:f.repeat_interval??null,repeat_unit:f.repeat_unit??null};
+    repeat_interval:f.repeat_interval??null,repeat_unit:f.repeat_unit??null,
+    repeat_mode:f.repeat_mode||'on_complete'};
   const {data,error}=await sb.from('todos').insert(row).select().single();
   if(error){toast('Error: '+error.message);console.error(error);return;}
   todos.push(data);updateCounts();render();
@@ -1471,7 +1535,8 @@ async function updateTodo(id,fields){
   const justReopened=!!before&&wasDone&&nowNotDone;
   const repeatSnap=before?{id:before.id,text:before.text,user_id:before.user_id,priority:before.priority,
     notes:before.notes,group_name:before.group_name,assigned_to:before.assigned_to,
-    repeat_interval:before.repeat_interval,repeat_unit:before.repeat_unit}:null;
+    repeat_interval:before.repeat_interval,repeat_unit:before.repeat_unit,
+    repeat_mode:before.repeat_mode||'on_complete'}:null;
   // IMPORTANT: no .select().single() after the update — if the caller is reassigning
   // a task away from themselves (e.g. Nicky handing a task back to Mark, the owner),
   // they lose RLS read access to the updated row, which makes the select fail with
@@ -1497,7 +1562,10 @@ async function updateTodo(id,fields){
   updateCounts();render();
   // Recurrence: ticking off a repeating task creates the next occurrence.
   // Undoing that completion removes the copy again.
-  if(justCompleted&&repeatSnap&&repeatSnap.repeat_interval){
+  // Only 'on_complete' tasks spawn here. A 'fixed' task's next occurrence is put
+  // there by spawn_due_recurrences() in Postgres on its scheduled date — ticking
+  // this one off must NOT pull that forward, or it stops being a fixed schedule.
+  if(justCompleted&&repeatSnap&&repeatSnap.repeat_interval&&repeatSnap.repeat_mode!=='fixed'){
     await spawnNextOccurrence(repeatSnap);
   } else if(justReopened){
     await removeSpawnedOccurrence(id);
@@ -1921,14 +1989,28 @@ function renderList(){
 function repeatBadge(t){
   if(!t.repeat_interval||!t.repeat_unit)return'';
   const lbl=repeatLabel(t.repeat_interval,t.repeat_unit);
-  const nxt=nextRepeatDate(t);
-  const when=fmtDateAbs(nxt);
-  // Done => the next copy genuinely exists with that due date. Not done => projection.
-  const tip=t.done
-    ? 'Repeats '+lbl+'. Next one is due '+when+'.'
-    : 'Repeats '+lbl+'. If you tick this off today the next one is due '+when+' \u2014 the date moves with you, it\u2019s always '+lbl.replace(/^every /,'')+' from when you actually complete it.';
-  const prefix=t.done?'next ':'~';
-  return `<span class="repeat-badge" title="${esc(tip)}">\u21bb ${esc(lbl)}<span class="repeat-next">${esc(prefix+when)}</span></span>`;
+  const every=lbl.replace(/^every /,'');
+  const when=fmtDateAbs(nextRepeatDate(t));
+  const fixed=t.repeat_mode==='fixed';
+  let tip,prefix,cls;
+  if(fixed){
+    // Fixed schedule: the date is a firm commitment, known in advance.
+    cls='repeat-badge rb-fixed';
+    prefix='next ';
+    tip='Fixed schedule, '+lbl+'. The next one appears on '+when+' whether or not this is ticked off.';
+  } else if(t.done){
+    // Done: the copy genuinely exists with that due date.
+    cls='repeat-badge';
+    prefix='next ';
+    tip='Repeats '+lbl+'. Next one is due '+when+'.';
+  } else {
+    // Open + on-complete: the date is a projection that moves with you.
+    cls='repeat-badge';
+    prefix='~';
+    tip='Repeats '+lbl+'. If you tick this off today the next one is due '+when+' \u2014 the date moves with you, it\u2019s always '+every+' from when you actually complete it.';
+  }
+  const icon=fixed?'\u{1F4C5}':'\u21bb';
+  return `<span class="${cls}" title="${esc(tip)}">${icon} ${esc(lbl)}${when?`<span class="repeat-next">${esc(prefix+when)}</span>`:''}</span>`;
 }
 function renderTaskRow(t){
   const over=isOverdue(t),soon=isDueSoon(t)&&!over,todayDue=isDueToday(t)&&!over;
@@ -2181,7 +2263,7 @@ function openPanel(id){
   document.getElementById('panelDue').value=t.due_date?t.due_date.slice(0,10):'';
   document.getElementById('panelNotes').value=t.notes||'';
   document.getElementById('panelGroup').value=t.group_name||'Work';
-  writeRepeat('panel',t.repeat_interval,t.repeat_unit);
+  writeRepeat('panel',t.repeat_interval,t.repeat_unit,t.repeat_mode);
   // Populate Assigned-to picker — show every OTHER user, whether they own it or not.
   // A viewer who is the assignee needs to be able to hand it back to the owner.
   const sel=document.getElementById('panelAssignedTo');
@@ -2315,7 +2397,7 @@ async function savePanel(){
   const pre=todos.find(t=>t.id===panelId);
   const snap=pre?{text:pre.text,status:pre.status,done:pre.done,priority:pre.priority,
     start_date:pre.start_date,due_date:pre.due_date,notes:pre.notes,group_name:pre.group_name,completed_at:pre.completed_at,assigned_to:pre.assigned_to,
-    repeat_interval:pre.repeat_interval,repeat_unit:pre.repeat_unit}:null;
+    repeat_interval:pre.repeat_interval,repeat_unit:pre.repeat_unit,repeat_mode:pre.repeat_mode}:null;
   const status=document.getElementById('panelStatus').value;
   const txt=document.getElementById('panelTitle').value.trim()||'Untitled';
   // Compute assigned_to with spec rule: "reassigning to the owner = unassigning"
@@ -2470,7 +2552,7 @@ function openQuickAdd(group='',status='not_started',due=''){
   sel.innerHTML='<option value="">Me (keep)</option>'+
     others.map(p=>`<option value="${p.id}">${esc(userDisplay(p))}</option>`).join('');
   sel.value='';
-  writeRepeat('qm',null,null);
+  writeRepeat('qm',null,null,'on_complete');
   document.getElementById('quickModal').classList.add('open');
   setTimeout(()=>document.getElementById('qmTitle').focus(),60);
 }
@@ -2486,7 +2568,7 @@ async function submitQuickAdd(){
     due_date:document.getElementById('qmDue').value||null,
     group_name:document.getElementById('qmGroup').value||'Work',
     assigned_to:document.getElementById('qmAssign').value||null,
-    repeat_interval:rep.repeat_interval,repeat_unit:rep.repeat_unit});
+    repeat_interval:rep.repeat_interval,repeat_unit:rep.repeat_unit,repeat_mode:rep.repeat_mode});
   closeQuickAdd();
 }
 
