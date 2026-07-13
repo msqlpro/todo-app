@@ -2,6 +2,13 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.12.1 — 2026-07-13
+
+- Repeating tasks now show the next repeat date on the task row, e.g. `↻ every 97 days | ~18 Oct`
+- Because the next occurrence is pegged to when you actually *complete* the task, that date is a projection while the task is still open — it shifts forward each day it sits unticked. The badge marks it with a `~` and the tooltip spells this out. Once the task is done, the `~` drops and the date shown is the real due date of the copy that was created
+- The Repeat dropdown in the add box and detail panel now previews the date too: "Tick this off today and the next one is due 18 Oct"
+- The date is hidden on narrow phone screens to keep rows readable
+
 ## v1.12.0 — 2026-07-13
 
 - **Repeating tasks.** When adding a task (or editing one in the detail panel) you can now set a Repeat: daily, weekly, fortnightly, monthly, quarterly, every 6 months, yearly — or Custom, for any arbitrary interval like every 97 days or every 87 weeks

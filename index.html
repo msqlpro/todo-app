@@ -220,6 +220,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
   font-size:9.5px;font-weight:700;letter-spacing:.02em;vertical-align:middle;white-space:nowrap;
   background:var(--border2);color:var(--text2);opacity:.9}
 .done-row .repeat-badge{opacity:.5}
+.repeat-next{margin-left:5px;padding-left:5px;border-left:1px solid var(--text3);opacity:.75;font-weight:600}
+@media(max-width:640px){.repeat-next{display:none}}
 .due-chip{font-size:11px;font-weight:600;border-radius:6px;padding:3px 6px;white-space:nowrap;cursor:pointer;transition:opacity .15s;max-width:90px;overflow:hidden;text-overflow:ellipsis}
 .due-chip:hover{opacity:.75}
 .due-ok{color:var(--text3);background:var(--surface2)}
@@ -1043,7 +1045,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.12.0';
+const APP_VERSION='1.12.1';
 const APP_BUILD='2026-07-13';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1327,6 +1329,27 @@ function writeRepeat(prefix,interval,unit){
   onRepeatChange(prefix);
 }
 
+// Absolute date, e.g. "18 Oct 2026". Deliberately NOT fmtDate() — that returns
+// relative strings ("3d", "Tomorrow") which read badly for a projected next date.
+function fmtDateAbs(iso){
+  if(!iso)return'';
+  const d=new Date(iso.slice(0,10)+'T00:00:00');
+  const sameYear=d.getFullYear()===new Date().getFullYear();
+  return d.toLocaleDateString('en-GB',sameYear?{day:'numeric',month:'short'}:{day:'numeric',month:'short',year:'numeric'});
+}
+
+// The date the next occurrence would land on.
+// NOTE: for an open task this is a PROJECTION, not a fixed schedule — the next
+// occurrence is pegged to when you actually complete it, so this date moves
+// forward every day the task sits unticked. Once the task IS done, the date is
+// real (it's what the spawned copy was given). The UI labels the two cases
+// differently so the moving one doesn't look like a firm commitment.
+function nextRepeatDate(t){
+  if(!t||!t.repeat_interval||!t.repeat_unit)return null;
+  const base=(t.done&&t.completed_at)?new Date(t.completed_at):new Date();
+  return isoDate(addInterval(base,t.repeat_interval,t.repeat_unit));
+}
+
 function repeatLabel(interval,unit){
   if(!interval||!unit)return'';
   if(interval===1)return'every '+unit;
@@ -1343,7 +1366,8 @@ function onRepeatChange(prefix){
   if(hint){
     const r=readRepeat(prefix);
     if(r.repeat_interval){
-      hint.textContent='When you tick this off, a fresh copy is created due '+repeatLabel(r.repeat_interval,r.repeat_unit).replace(/^every /,'')+' later, at the same priority.';
+      const proj=fmtDateAbs(isoDate(addInterval(new Date(),r.repeat_interval,r.repeat_unit)));
+      hint.textContent='Tick this off today and the next one is due '+proj+'. The date shifts with you \u2014 it\u2019s always '+repeatLabel(r.repeat_interval,r.repeat_unit).replace(/^every /,'')+' from whenever you actually complete it.';
       hint.style.display='block';
     }else{
       hint.style.display='none';
@@ -1894,6 +1918,18 @@ function renderList(){
   }).join('');
 }
 
+function repeatBadge(t){
+  if(!t.repeat_interval||!t.repeat_unit)return'';
+  const lbl=repeatLabel(t.repeat_interval,t.repeat_unit);
+  const nxt=nextRepeatDate(t);
+  const when=fmtDateAbs(nxt);
+  // Done => the next copy genuinely exists with that due date. Not done => projection.
+  const tip=t.done
+    ? 'Repeats '+lbl+'. Next one is due '+when+'.'
+    : 'Repeats '+lbl+'. If you tick this off today the next one is due '+when+' \u2014 the date moves with you, it\u2019s always '+lbl.replace(/^every /,'')+' from when you actually complete it.';
+  const prefix=t.done?'next ':'~';
+  return `<span class="repeat-badge" title="${esc(tip)}">\u21bb ${esc(lbl)}<span class="repeat-next">${esc(prefix+when)}</span></span>`;
+}
 function renderTaskRow(t){
   const over=isOverdue(t),soon=isDueSoon(t)&&!over,todayDue=isDueToday(t)&&!over;
   const dueLabel=t.due_date?fmtDate(t.due_date):'Add date';
@@ -1920,7 +1956,7 @@ function renderTaskRow(t){
     </div>
 
     <div class="task-text-wrap" onclick="openPanel('${t.id}')">
-      <div class="task-text">${esc(t.text)}${t.repeat_interval&&t.repeat_unit?`<span class="repeat-badge" title="Repeats ${esc(repeatLabel(t.repeat_interval,t.repeat_unit))} — a new copy appears when you tick this off">↻ ${esc(repeatLabel(t.repeat_interval,t.repeat_unit))}</span>`:''}</div>
+      <div class="task-text">${esc(t.text)}${repeatBadge(t)}</div>
       ${t.notes?`<div class="task-note">📝 ${esc(t.notes.slice(0,50))}</div>`:''}
     </div>
 
