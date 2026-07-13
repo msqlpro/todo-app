@@ -2,6 +2,13 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.11.5 — 2026-07-13
+
+- Bug fix: setting a new password hung forever with no error message. `onAuthStateChange` was calling `showApp()` (and therefore `loadTodos`, `subscribeRealtime`, etc.) synchronously inside the callback, while Supabase still held its internal auth lock — so `updateUser()` was waiting on work that was waiting on `updateUser()`. All auth-state work is now deferred off that callback stack
+- `TOKEN_REFRESHED` and `USER_UPDATED` events no longer re-run `showApp()` — they only refresh the cached user object
+- Realtime subscription is now idempotent: re-entering the app tears down the old `todos-rt` channel first, so events can't be applied twice
+- The password reset now fails with a visible error after 15s instead of leaving the button stuck on "Setting…"
+
 ## v1.11.4 — 2026-05-27
 
 - Bug fix: when a non-owner (e.g. an assignee) reassigned a task back to the owner AND edited the notes (or status, priority, dates, etc.) in the same save, only the reassignment was being saved — the other edits were silently dropped. Now all edits go through together via an extended `reassign_todo` RPC. This is why "handback notes" from Emma/Nicky/etc. weren't showing up

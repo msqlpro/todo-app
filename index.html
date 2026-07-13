@@ -985,8 +985,8 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.11.4';
-const APP_BUILD='2026-04-24';
+const APP_VERSION='1.11.5';
+const APP_BUILD='2026-07-13';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
 // Poll version.json on load and every 5 minutes. If the deployed
@@ -1035,12 +1035,31 @@ async function init(){
   const {data:{session}}=await sb.auth.getSession();
   if(session){user=session.user;showApp();}else showAuth();
   sb.auth.onAuthStateChange((event,s)=>{
-    if(event==='PASSWORD_RECOVERY'){
-      // User arrived here via the reset-password link. Show the set-new-password form.
-      showPasswordReset();
-      return;
-    }
-    if(s){user=s.user;showApp();}else{user=null;todos=[];showAuth();}
+    // IMPORTANT: Supabase holds an internal auth lock for the whole time this
+    // callback is running. Anything in here that touches sb.auth / sb.from /
+    // realtime will queue behind that lock — and deadlock whatever call fired
+    // the event. That's what made updateUser() hang forever on password reset
+    // (USER_UPDATED -> showApp -> loadTodos -> needs token -> blocked).
+    // So: never do Supabase work on this stack. Always defer it.
+    setTimeout(()=>{
+      if(event==='PASSWORD_RECOVERY'){
+        // User arrived here via the reset-password link. Show the set-new-password form.
+        showPasswordReset();
+        return;
+      }
+      // Token refresh / profile update: session is the same user, nothing to
+      // re-render. Re-running showApp() here would re-subscribe realtime and
+      // duplicate the 'todos-rt' channel.
+      if(event==='TOKEN_REFRESHED'||event==='USER_UPDATED'){
+        if(s)user=s.user;
+        return;
+      }
+      if(s){
+        const sameUser=user&&user.id===s.user.id;
+        user=s.user;
+        if(!sameUser)showApp();
+      }else{user=null;todos=[];showAuth();}
+    },0);
   });
 }
 function showPasswordReset(){
@@ -1059,15 +1078,26 @@ async function submitPasswordReset(){
   if(p1!==p2){showErr('Passwords don\'t match.');return;}
   const btn=document.getElementById('resetSubmit');
   btn.disabled=true;btn.textContent='Setting…';
-  const {error}=await sb.auth.updateUser({password:p1});
+  // Guard against a silent hang: if Supabase never resolves, surface an error
+  // instead of leaving the button stuck on "Setting…" forever.
+  let res;
+  try{
+    res=await Promise.race([
+      sb.auth.updateUser({password:p1}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('Timed out talking to Supabase. Check your connection and try again.')),15000))
+    ]);
+  }catch(e){
+    btn.disabled=false;btn.textContent='Set new password';
+    showErr(e.message);return;
+  }
   btn.disabled=false;btn.textContent='Set new password';
-  if(error){showErr(error.message);return;}
+  if(res.error){showErr(res.error.message);return;}
   // Success — show a confirmation then flip to app
   document.getElementById('resetWrap').style.display='none';
   toast('Password updated — you\'re signed in');
-  // user is already set by Supabase from the recovery session, show the app
-  const {data:{session}}=await sb.auth.getSession();
-  if(session){user=session.user;showApp();}
+  // updateUser returns the user directly; no need to re-fetch the session.
+  const u=res.data&&res.data.user;
+  if(u){user=u;showApp();}
 }
 function showAuth(){
   document.getElementById('authWrap').style.display='flex';
@@ -1350,8 +1380,14 @@ function openAssignedFromNotif(){
 }
 
 let rtHadError=false;
+let rtChannel=null;
 function subscribeRealtime(){
-  sb.channel('todos-rt')
+  // showApp() can run more than once in a session (e.g. the password-recovery
+  // flow shows the app, then the reset form, then the app again). Without this
+  // guard we'd stack up duplicate 'todos-rt' channels and get every realtime
+  // event applied twice.
+  if(rtChannel){try{sb.removeChannel(rtChannel);}catch(e){}rtChannel=null;}
+  rtChannel=sb.channel('todos-rt')
     .on('postgres_changes',{event:'*',schema:'public',table:'todos'},applyRealtimeChange)
     .subscribe(s=>{
       if(s==='SUBSCRIBED'){
