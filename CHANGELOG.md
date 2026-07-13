@@ -2,6 +2,16 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.12.0 — 2026-07-13
+
+- **Repeating tasks.** When adding a task (or editing one in the detail panel) you can now set a Repeat: daily, weekly, fortnightly, monthly, quarterly, every 6 months, yearly — or Custom, for any arbitrary interval like every 97 days or every 87 weeks
+- The next occurrence is created **when you tick the current one off**, with its due date set to *completion date + interval*. So a job done late doesn't immediately reappear already overdue — the clock restarts when the work actually happened
+- The new copy carries over the same priority, notes, space and assignee, and lands at the top of its bucket. Set a repeating task to Urgent and it comes back at the top of Urgent every cycle
+- Month and year intervals clamp to the end of the month: 31 Jan + 1 month = 28 Feb, not 3 March
+- Repeating tasks show a `↻ every 97 days` badge in the list
+- Undoing a completion also removes the copy that was spawned, so you don't get a stray duplicate
+- DB: `todos.repeat_interval` (int) and `todos.repeat_unit` (day/week/month/year) added, with constraints
+
 ## v1.11.5 — 2026-07-13
 
 - Bug fix: setting a new password hung forever with no error message. `onAuthStateChange` was calling `showApp()` (and therefore `loadTodos`, `subscribeRealtime`, etc.) synchronously inside the callback, while Supabase still held its internal auth lock — so `updateUser()` was waiting on work that was waiting on `updateUser()`. All auth-state work is now deferred off that callback stack

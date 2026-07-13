@@ -216,6 +216,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 
 /* Due date chip - clickable */
 .due-wrap{position:relative;flex-shrink:0}
+.repeat-badge{display:inline-flex;align-items:center;gap:3px;margin-left:7px;padding:1px 6px;border-radius:9px;
+  font-size:9.5px;font-weight:700;letter-spacing:.02em;vertical-align:middle;white-space:nowrap;
+  background:var(--border2);color:var(--text2);opacity:.9}
+.done-row .repeat-badge{opacity:.5}
 .due-chip{font-size:11px;font-weight:600;border-radius:6px;padding:3px 6px;white-space:nowrap;cursor:pointer;transition:opacity .15s;max-width:90px;overflow:hidden;text-overflow:ellipsis}
 .due-chip:hover{opacity:.75}
 .due-ok{color:var(--text3);background:var(--surface2)}
@@ -801,6 +805,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
       </label>
       <select class="qm-sel" id="qmAssign" style="flex:1"></select>
     </div>
+    <div class="qm-row" style="margin-top:-2px">
+      <label style="font-size:12px;color:var(--text2);font-weight:600;display:flex;align-items:center;gap:6px;white-space:nowrap">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" style="opacity:.7"><path d="M2 5.5A4.5 4.5 0 0 1 11 4.2M12 8.5A4.5 4.5 0 0 1 3 9.8"/><path d="M11 1.5v3H8M3 12.5v-3h3"/></svg>
+        Repeat
+      </label>
+      <select class="qm-sel" id="qmRepeat" style="flex:1" onchange="onRepeatChange('qm')">
+        <option value="">Doesn't repeat</option>
+        <option value="1:day">Every day</option>
+        <option value="1:week">Every week</option>
+        <option value="2:week">Every 2 weeks</option>
+        <option value="1:month">Every month</option>
+        <option value="3:month">Every 3 months</option>
+        <option value="6:month">Every 6 months</option>
+        <option value="1:year">Every year</option>
+        <option value="custom">Custom…</option>
+      </select>
+    </div>
+    <div class="qm-row" id="qmRepeatCustom" style="margin-top:-2px;display:none">
+      <span style="font-size:12px;color:var(--text2);font-weight:600;white-space:nowrap">Every</span>
+      <input class="qm-sel" type="number" id="qmRepeatN" min="1" max="999" value="97" style="width:76px;text-align:center">
+      <select class="qm-sel" id="qmRepeatUnit" style="flex:1">
+        <option value="day">days</option>
+        <option value="week">weeks</option>
+        <option value="month">months</option>
+        <option value="year">years</option>
+      </select>
+    </div>
+    <div id="qmRepeatHint" style="display:none;font-size:11px;color:var(--text3);margin:2px 2px 0;line-height:1.4"></div>
     <div class="qm-actions">
       <button class="btn-cancel" onclick="closeQuickAdd()">Cancel</button>
       <button class="btn-add" onclick="submitQuickAdd()">Add Task</button>
@@ -888,6 +920,32 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
         <span class="panel-field-label">Assigned to</span>
         <select class="panel-select" id="panelAssignedTo"></select>
         <div class="panel-field-hint" id="panelAssignedHint" style="font-size:11px;color:var(--text3);margin-top:6px;display:none"></div>
+      </div>
+
+      <div class="panel-field">
+        <span class="panel-field-label">Repeat</span>
+        <select class="panel-select" id="panelRepeat" onchange="onRepeatChange('panel')">
+          <option value="">Doesn't repeat</option>
+          <option value="1:day">Every day</option>
+          <option value="1:week">Every week</option>
+          <option value="2:week">Every 2 weeks</option>
+          <option value="1:month">Every month</option>
+          <option value="3:month">Every 3 months</option>
+          <option value="6:month">Every 6 months</option>
+          <option value="1:year">Every year</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <div id="panelRepeatCustom" style="display:none;gap:8px;margin-top:8px;align-items:center">
+          <span style="font-size:12px;color:var(--text2);font-weight:600;white-space:nowrap">Every</span>
+          <input class="panel-select" type="number" id="panelRepeatN" min="1" max="999" value="97" style="width:80px;text-align:center">
+          <select class="panel-select" id="panelRepeatUnit" style="flex:1">
+            <option value="day">days</option>
+            <option value="week">weeks</option>
+            <option value="month">months</option>
+            <option value="year">years</option>
+          </select>
+        </div>
+        <div class="panel-field-hint" id="panelRepeatHint" style="font-size:11px;color:var(--text3);margin-top:6px;display:none"></div>
       </div>
 
       <div class="panel-field">
@@ -985,7 +1043,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.11.5';
+const APP_VERSION='1.12.0';
 const APP_BUILD='2026-07-13';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1227,6 +1285,132 @@ function checkAssignmentAlerts(){
     toast(`${who} completed: "${text}"`);
   });
 }
+// ── RECURRENCE ──────────────────────────────────────────────────
+// A repeating task is stored as (repeat_interval, repeat_unit), e.g. (97,'day').
+// The next occurrence is created when you TICK THE CURRENT ONE OFF — its due date
+// is (completion date + interval), not (old due date + interval). That's the right
+// behaviour for "every 97 days" style chores: the clock restarts when the job is
+// actually done, so a late completion doesn't immediately spawn an overdue copy.
+const REPEAT_UNITS={day:'day',week:'week',month:'month',year:'year'};
+
+// Read the repeat controls for a given prefix ('qm' = quick add, 'panel' = detail panel)
+function readRepeat(prefix){
+  const sel=document.getElementById(prefix+'Repeat');
+  if(!sel)return{repeat_interval:null,repeat_unit:null};
+  const v=sel.value;
+  if(!v)return{repeat_interval:null,repeat_unit:null};
+  if(v==='custom'){
+    let n=parseInt(document.getElementById(prefix+'RepeatN').value,10);
+    const u=document.getElementById(prefix+'RepeatUnit').value;
+    if(!Number.isFinite(n)||n<1)n=1;
+    if(n>999)n=999;
+    if(!REPEAT_UNITS[u])return{repeat_interval:null,repeat_unit:null};
+    return{repeat_interval:n,repeat_unit:u};
+  }
+  const[n,u]=v.split(':');
+  return{repeat_interval:parseInt(n,10),repeat_unit:u};
+}
+
+// Push the stored repeat values back into the controls
+function writeRepeat(prefix,interval,unit){
+  const sel=document.getElementById(prefix+'Repeat');
+  if(!sel)return;
+  if(!interval||!unit){sel.value='';onRepeatChange(prefix);return;}
+  const preset=interval+':'+unit;
+  const known=Array.from(sel.options).some(o=>o.value===preset);
+  if(known){sel.value=preset;}
+  else{
+    sel.value='custom';
+    document.getElementById(prefix+'RepeatN').value=interval;
+    document.getElementById(prefix+'RepeatUnit').value=unit;
+  }
+  onRepeatChange(prefix);
+}
+
+function repeatLabel(interval,unit){
+  if(!interval||!unit)return'';
+  if(interval===1)return'every '+unit;
+  return'every '+interval+' '+unit+'s';
+}
+
+function onRepeatChange(prefix){
+  const sel=document.getElementById(prefix+'Repeat');
+  const box=document.getElementById(prefix+'RepeatCustom');
+  const hint=document.getElementById(prefix+'RepeatHint');
+  if(!sel)return;
+  const isCustom=sel.value==='custom';
+  if(box)box.style.display=isCustom?'flex':'none';
+  if(hint){
+    const r=readRepeat(prefix);
+    if(r.repeat_interval){
+      hint.textContent='When you tick this off, a fresh copy is created due '+repeatLabel(r.repeat_interval,r.repeat_unit).replace(/^every /,'')+' later, at the same priority.';
+      hint.style.display='block';
+    }else{
+      hint.style.display='none';
+    }
+  }
+}
+
+// Add `interval` units to a Date. Month/year arithmetic clamps to the end of the
+// month so 31 Jan + 1 month = 28/29 Feb rather than rolling into March.
+function addInterval(date,interval,unit){
+  const d=new Date(date.getTime());
+  if(unit==='day'){d.setDate(d.getDate()+interval);return d;}
+  if(unit==='week'){d.setDate(d.getDate()+interval*7);return d;}
+  const months=unit==='year'?interval*12:interval;
+  const day=d.getDate();
+  d.setDate(1);
+  d.setMonth(d.getMonth()+months);
+  const lastDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  d.setDate(Math.min(day,lastDay));
+  return d;
+}
+
+function isoDate(d){
+  // Local-date ISO (yyyy-mm-dd). Don't use toISOString() — that's UTC and would
+  // roll the date back a day for anyone west of Greenwich / during BST edge cases.
+  const p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+
+// Map of parent task id -> id of the occurrence it just spawned, so that undoing
+// a completion also removes the copy we created.
+const recurChildren={};
+
+async function spawnNextOccurrence(t){
+  if(!t||!t.repeat_interval||!t.repeat_unit)return;
+  const next=addInterval(new Date(),t.repeat_interval,t.repeat_unit);
+  const minSO=todos.length?Math.min(...todos.map(x=>x.sort_order??0)):0;
+  const row={
+    text:t.text,done:false,user_id:t.user_id,
+    priority:t.priority||'none',status:'not_started',
+    start_date:null,due_date:isoDate(next),
+    notes:t.notes||null,group_name:t.group_name||'Work',
+    sort_order:minSO-1000,assigned_to:t.assigned_to||null,
+    repeat_interval:t.repeat_interval,repeat_unit:t.repeat_unit
+  };
+  const {data,error}=await sb.from('todos').insert(row).select().single();
+  if(error){
+    toast("Repeated task couldn't be recreated: "+error.message);
+    console.error('spawnNextOccurrence failed',{parent:t.id,row,error});
+    return;
+  }
+  recurChildren[t.id]=data.id;
+  todos.push(data);updateCounts();render();
+  toast('Repeats '+repeatLabel(t.repeat_interval,t.repeat_unit)+' — next one due '+isoDate(next));
+}
+
+// If a completion is undone, bin the copy we spawned so it doesn't linger.
+async function removeSpawnedOccurrence(parentId){
+  const childId=recurChildren[parentId];
+  if(!childId)return;
+  delete recurChildren[parentId];
+  await sb.from('todos').delete().eq('id',childId);
+  const i=todos.findIndex(x=>x.id===childId);
+  if(i!==-1)todos.splice(i,1);
+  updateCounts();render();
+}
+
 async function addTodo(f){
   // Normalize: assigning a task to yourself is the same as not assigning.
   const assignedTo=(f.assigned_to&&f.assigned_to!==user.id)?f.assigned_to:null;
@@ -1239,7 +1423,8 @@ async function addTodo(f){
     start_date:f.start_date?f.start_date.slice(0,10):null,
     due_date:f.due_date?f.due_date.slice(0,10):null,notes:f.notes||null,
     group_name:f.group_name||'Work',sort_order:minSO-1000,
-    assigned_to:assignedTo};
+    assigned_to:assignedTo,
+    repeat_interval:f.repeat_interval??null,repeat_unit:f.repeat_unit??null};
   const {data,error}=await sb.from('todos').insert(row).select().single();
   if(error){toast('Error: '+error.message);console.error(error);return;}
   todos.push(data);updateCounts();render();
@@ -1252,6 +1437,17 @@ async function addTodo(f){
 async function updateTodo(id,fields){
   if(fields.status==='done'){fields.done=true;fields.completed_at=new Date().toISOString();}
   else if(fields.status&&fields.status!=='done'){fields.done=false;fields.completed_at=null;}
+  // Detect a done-transition BEFORE the write, so recurrence works no matter which
+  // path got us here (checkbox, status dropdown, panel save, drag to Done column).
+  const before=todos.find(t=>t.id===id);
+  const wasDone=!!(before&&before.done);
+  const nowDone=fields.done===true||fields.status==='done';
+  const nowNotDone=fields.done===false||(fields.status&&fields.status!=='done');
+  const justCompleted=!!before&&!wasDone&&nowDone;
+  const justReopened=!!before&&wasDone&&nowNotDone;
+  const repeatSnap=before?{id:before.id,text:before.text,user_id:before.user_id,priority:before.priority,
+    notes:before.notes,group_name:before.group_name,assigned_to:before.assigned_to,
+    repeat_interval:before.repeat_interval,repeat_unit:before.repeat_unit}:null;
   // IMPORTANT: no .select().single() after the update — if the caller is reassigning
   // a task away from themselves (e.g. Nicky handing a task back to Mark, the owner),
   // they lose RLS read access to the updated row, which makes the select fail with
@@ -1275,6 +1471,13 @@ async function updateTodo(id,fields){
     if(!stillVisible)todos.splice(i,1);
   }
   updateCounts();render();
+  // Recurrence: ticking off a repeating task creates the next occurrence.
+  // Undoing that completion removes the copy again.
+  if(justCompleted&&repeatSnap&&repeatSnap.repeat_interval){
+    await spawnNextOccurrence(repeatSnap);
+  } else if(justReopened){
+    await removeSpawnedOccurrence(id);
+  }
 }
 async function deleteTodo(id){
   const snapshot=todos.find(t=>t.id===id);
@@ -1717,7 +1920,7 @@ function renderTaskRow(t){
     </div>
 
     <div class="task-text-wrap" onclick="openPanel('${t.id}')">
-      <div class="task-text">${esc(t.text)}</div>
+      <div class="task-text">${esc(t.text)}${t.repeat_interval&&t.repeat_unit?`<span class="repeat-badge" title="Repeats ${esc(repeatLabel(t.repeat_interval,t.repeat_unit))} — a new copy appears when you tick this off">↻ ${esc(repeatLabel(t.repeat_interval,t.repeat_unit))}</span>`:''}</div>
       ${t.notes?`<div class="task-note">📝 ${esc(t.notes.slice(0,50))}</div>`:''}
     </div>
 
@@ -1942,6 +2145,7 @@ function openPanel(id){
   document.getElementById('panelDue').value=t.due_date?t.due_date.slice(0,10):'';
   document.getElementById('panelNotes').value=t.notes||'';
   document.getElementById('panelGroup').value=t.group_name||'Work';
+  writeRepeat('panel',t.repeat_interval,t.repeat_unit);
   // Populate Assigned-to picker — show every OTHER user, whether they own it or not.
   // A viewer who is the assignee needs to be able to hand it back to the owner.
   const sel=document.getElementById('panelAssignedTo');
@@ -2074,7 +2278,8 @@ async function savePanel(){
   if(!panelId)return;
   const pre=todos.find(t=>t.id===panelId);
   const snap=pre?{text:pre.text,status:pre.status,done:pre.done,priority:pre.priority,
-    start_date:pre.start_date,due_date:pre.due_date,notes:pre.notes,group_name:pre.group_name,completed_at:pre.completed_at,assigned_to:pre.assigned_to}:null;
+    start_date:pre.start_date,due_date:pre.due_date,notes:pre.notes,group_name:pre.group_name,completed_at:pre.completed_at,assigned_to:pre.assigned_to,
+    repeat_interval:pre.repeat_interval,repeat_unit:pre.repeat_unit}:null;
   const status=document.getElementById('panelStatus').value;
   const txt=document.getElementById('panelTitle').value.trim()||'Untitled';
   // Compute assigned_to with spec rule: "reassigning to the owner = unassigning"
@@ -2134,6 +2339,7 @@ async function savePanel(){
     group_name:document.getElementById('panelGroup').value||'Work',
     assigned_to:newAssignedTo,
     completed_at:status==='done'?new Date().toISOString():null,
+    ...readRepeat('panel'),
   };
   await updateTodo(panelId,patch);
   const idCopy=panelId;
@@ -2228,6 +2434,7 @@ function openQuickAdd(group='',status='not_started',due=''){
   sel.innerHTML='<option value="">Me (keep)</option>'+
     others.map(p=>`<option value="${p.id}">${esc(userDisplay(p))}</option>`).join('');
   sel.value='';
+  writeRepeat('qm',null,null);
   document.getElementById('quickModal').classList.add('open');
   setTimeout(()=>document.getElementById('qmTitle').focus(),60);
 }
@@ -2236,12 +2443,14 @@ document.getElementById('qmTitle').addEventListener('keydown',e=>{if(e.key==='En
 async function submitQuickAdd(){
   const txt=document.getElementById('qmTitle').value.trim();
   if(!txt)return;
+  const rep=readRepeat('qm');
   await addTodo({text:txt,priority:document.getElementById('qmPri').value,
     status:document.getElementById('qmStat').value,
     start_date:document.getElementById('qmStart').value||null,
     due_date:document.getElementById('qmDue').value||null,
     group_name:document.getElementById('qmGroup').value||'Work',
-    assigned_to:document.getElementById('qmAssign').value||null});
+    assigned_to:document.getElementById('qmAssign').value||null,
+    repeat_interval:rep.repeat_interval,repeat_unit:rep.repeat_unit});
   closeQuickAdd();
 }
 
