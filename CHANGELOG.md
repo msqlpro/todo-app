@@ -2,6 +2,10 @@
 
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
+## v1.13.1 — 2026-07-16
+
+- New tasks now default to 🔴 Urgent when the Add Task box opens (was ⚪ Unsorted). You can still change the priority before saving. Applies to the Quick Add box only; bulk paste-import still creates tasks as Unsorted
+
 ## v1.13.0 — 2026-07-13
 
 - **Two kinds of repeat.** Every repeating task now picks how its next occurrence arrives:

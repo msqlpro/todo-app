@@ -2541,7 +2541,7 @@ let qmGroup='',qmStat='',qmDue='';
 function openQuickAdd(group='',status='not_started',due=''){
   qmGroup=group;qmStat=status;qmDue=due;
   document.getElementById('qmTitle').value='';
-  document.getElementById('qmPri').value='none';
+  document.getElementById('qmPri').value='urgent';
   document.getElementById('qmStat').value=status||'not_started';
   document.getElementById('qmStart').value='';
   document.getElementById('qmDue').value=due||'';
