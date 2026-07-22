@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.14.0 — 2026-07-22
+- New: passwordless sign-in via emailed code ("Email me a sign-in code" on the login screen). Accepts up to 10-character alphanumeric codes. No more password resets — which also stops resets from logging you out of PD Tracker (shared Supabase auth).
+
 Version numbers follow [semver](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
 ## v1.13.1 — 2026-07-16

@@ -572,6 +572,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
     <button class="auth-submit" id="authSubmit">Sign in</button>
     <div style="text-align:center;margin-top:14px">
       <button type="button" id="forgotLink" style="background:none;border:none;color:var(--text2);font-size:12px;font-family:var(--fb);cursor:pointer;text-decoration:underline;padding:4px">Forgot password?</button>
+      <button type="button" id="otpLink" style="background:none;border:none;color:var(--text2);font-size:12px;font-family:var(--fb);cursor:pointer;text-decoration:underline;padding:4px">Email me a sign-in code</button>
+    </div>
+    <div id="otpSection" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      <label class="field-label">Code from the email</label>
+      <input class="field-input" type="text" id="otpCode" placeholder="code from email" autocomplete="one-time-code" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="10" style="text-align:center;font-size:20px;letter-spacing:3px;font-weight:700">
+      <button class="auth-submit" id="otpVerify" style="margin-top:8px">Verify code &amp; sign in</button>
     </div>
     <div style="text-align:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
       <div style="font-size:11px;color:var(--text3);line-height:1.5">Tadoo is for Brainbox Candy staff.<br>Need access? Ask Mark.</div>
@@ -1060,8 +1066,8 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.13.1';
-const APP_BUILD='2026-07-16';
+const APP_VERSION='1.14.0';
+const APP_BUILD='2026-07-22';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
 // Poll version.json on load and every 5 minutes. If the deployed
@@ -1264,6 +1270,36 @@ document.getElementById('forgotLink').onclick=async()=>{
   el.style.borderColor='var(--medium-border)';
   el.style.color='var(--medium)';
 };
+
+// ── EMAIL CODE SIGN-IN (no password needed) ─────────────────────
+document.getElementById('otpLink').onclick=async()=>{
+  const email=document.getElementById('authEmail').value.trim();
+  if(!email){showAuthErr('Enter your email above, then click "Email me a sign-in code".');return;}
+  const link=document.getElementById('otpLink');
+  link.disabled=true;link.textContent='Sending…';
+  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}});
+  link.disabled=false;link.textContent='Email me a sign-in code';
+  if(error){showAuthErr(error.message);return;}
+  document.getElementById('otpSection').style.display='block';
+  const el=document.getElementById('authErr');
+  el.textContent='Email sent! Type the code from it below — this signs you in right here.';
+  el.style.display='block';
+  el.style.background='var(--medium-bg)';
+  el.style.borderColor='var(--medium-border)';
+  el.style.color='var(--medium)';
+  document.getElementById('otpCode').focus();
+};
+document.getElementById('otpVerify').onclick=async()=>{
+  const email=document.getElementById('authEmail').value.trim();
+  const code=document.getElementById('otpCode').value.replace(/\s/g,'');
+  if(!email||!code){showAuthErr('Enter your email and the code from the email.');return;}
+  const btn=document.getElementById('otpVerify');
+  btn.disabled=true;btn.textContent='Checking…';
+  const r=await sb.auth.verifyOtp({email,token:code,type:'email'});
+  btn.disabled=false;btn.textContent='Verify code & sign in';
+  if(r.error)showAuthErr(r.error.message);
+};
+document.getElementById('otpCode').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('otpVerify').click();});
 
 // ── DATA ────────────────────────────────────────────────────────
 async function loadTodos(){
