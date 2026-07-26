@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.14.1 — 2026-07-26
+- Fixed: on mobile, the sidebar stayed open on top of the content after picking a view (Events, Today, Projects, a Space, Settings — all of them). It now closes as soon as you choose something
+- The sidebar also closes when you tap outside it or press Escape, and a dimmed backdrop now appears behind it so it's obvious it's a slide-over
+- Resizing or rotating to a desktop-width layout no longer leaves the panel in a stale open state
+
 ## v1.14.0 — 2026-07-22
 - New: passwordless sign-in via emailed code ("Email me a sign-in code" on the login screen). Accepts up to 10-character alphanumeric codes. No more password resets — which also stops resets from logging you out of PD Tracker (shared Supabase auth).
 
