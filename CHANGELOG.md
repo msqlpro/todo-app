@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.14.2 — 2026-07-26
+- Tadoo is now installable to the phone home screen as a proper web app (added `manifest.json` and the iOS standalone meta tags). Previously the shortcut just reopened it as an ordinary browser tab with the address bar in the way
+- Note: the installed app has its own storage, so you sign in once more the first time you open it
+
 ## v1.14.1 — 2026-07-26
 - Fixed: on mobile, the sidebar stayed open on top of the content after picking a view (Events, Today, Projects, a Space, Settings — all of them). It now closes as soon as you choose something
 - The sidebar also closes when you tap outside it or press Escape, and a dimmed backdrop now appears behind it so it's obvious it's a slide-over
