@@ -554,7 +554,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .task-row.dragging{opacity:0.4;border:2px dashed var(--accent)}
 .task-row.drag-over-top{border-top:2px solid var(--accent);margin-top:-1px}
 .task-row.drag-over-bottom{border-bottom:2px solid var(--accent);margin-bottom:-1px}
-.drag-handle{display:flex;align-items:center;color:var(--border2);cursor:grab;flex-shrink:0;padding:0 2px;font-size:14px;line-height:1;opacity:0;transition:opacity .15s;user-select:none}
+.drag-handle{display:flex;align-items:center;color:var(--border2);cursor:grab;flex-shrink:0;padding:0 2px;font-size:14px;line-height:1;opacity:0;transition:opacity .15s;user-select:none;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none}
+body.tdrag{user-select:none;-webkit-user-select:none}
+@media(hover:none){
+  .drag-handle{opacity:.5;font-size:19px;padding:0 9px 0 3px}
+  .drag-handle:active{opacity:1;color:var(--accent)}
+}
 .task-row:hover .drag-handle{opacity:1}
 .drag-handle:active{cursor:grabbing;color:var(--accent)}
 .pri-adopt-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
@@ -1075,7 +1080,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.14.2';
+const APP_VERSION='1.15.0';
 const APP_BUILD='2026-07-26';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -3281,8 +3286,11 @@ async function rebalanceSortOrders(){
 
 async function onDrop(e, targetId){
   e.preventDefault();
-  const row=e.currentTarget;
-  row.classList.remove('drag-over-top','drag-over-bottom');
+  e.currentTarget.classList.remove('drag-over-top','drag-over-bottom');
+  await performDrop(targetId);
+}
+
+async function performDrop(targetId){
   if(!dragId||dragId===targetId)return;
 
   const srcTask=todos.find(t=>t.id===dragId);
@@ -3371,6 +3379,63 @@ async function onDrop(e, targetId){
     showPriToast('Order saved ✓');
   }
 }
+
+// --- Touch drag reordering.
+// The HTML5 drag-and-drop API doesn't fire on iOS/Android at all, so on touch
+// devices the row's draggable=true is inert. This drives the same performDrop()
+// from touch events, started by dragging the ⠿ handle.
+let tDrag=null;
+function tdClearMarkers(){
+  document.querySelectorAll('.task-row').forEach(r=>r.classList.remove('drag-over-top','drag-over-bottom'));
+}
+function tdEnd(commit){
+  if(!tDrag)return;
+  const target=tDrag.target;
+  const row=document.querySelector(`.task-row[data-id="${dragId}"]`);
+  if(row)row.classList.remove('dragging');
+  tdClearMarkers();
+  document.body.classList.remove('tdrag');
+  tDrag=null;
+  if(commit&&target){
+    performDrop(target).then(()=>{dragId=null;});
+  } else {
+    dragId=null;
+  }
+}
+document.addEventListener('touchstart',e=>{
+  if(tDrag)return;
+  const h=e.target.closest&&e.target.closest('.drag-handle');
+  if(!h)return;
+  const row=h.closest('.task-row');
+  if(!row||!row.dataset.id)return;
+  dragId=row.dataset.id;
+  dropPosition='bottom';
+  tDrag={target:null};
+  row.classList.add('dragging');
+  document.body.classList.add('tdrag');
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!tDrag)return;
+  e.preventDefault();
+  const p=e.touches[0];
+  if(!p)return;
+  const under=document.elementFromPoint(p.clientX,p.clientY);
+  const row=under&&under.closest?under.closest('.task-row'):null;
+  tdClearMarkers();
+  if(row&&row.dataset.id&&row.dataset.id!==dragId){
+    const r=row.getBoundingClientRect();
+    if(p.clientY<r.top+r.height/2){row.classList.add('drag-over-top');dropPosition='top';}
+    else{row.classList.add('drag-over-bottom');dropPosition='bottom';}
+    tDrag.target=row.dataset.id;
+  } else {
+    tDrag.target=null;
+  }
+  // Nudge the page when the finger nears an edge, so long lists stay reachable.
+  if(p.clientY<100)window.scrollBy(0,-14);
+  else if(p.clientY>window.innerHeight-100)window.scrollBy(0,14);
+},{passive:false});
+document.addEventListener('touchend',()=>tdEnd(true));
+document.addEventListener('touchcancel',()=>tdEnd(false));
 
 let priToastTimer;
 function showPriToast(msg){

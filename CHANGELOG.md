@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.15.0 — 2026-07-26
+- Tasks can now be dragged to reorder on a phone or tablet. Drag the ⠿ handle on the left of a row — the handle is now always visible on touch devices (it used to appear only on mouse hover, so on a phone it was invisible)
+- The underlying cause: reordering used the HTML5 drag-and-drop API, which iOS and Android never fire. Touch now drives the same reorder-and-inherit-priority logic the desktop drag always did, so behaviour is identical on both
+- The list auto-scrolls when you drag a task near the top or bottom of the screen
+
 ## v1.14.2 — 2026-07-26
 - Tadoo is now installable to the phone home screen as a proper web app (added `manifest.json` and the iOS standalone meta tags). Previously the shortcut just reopened it as an ordinary browser tab with the address bar in the way
 - Note: the installed app has its own storage, so you sign in once more the first time you open it
