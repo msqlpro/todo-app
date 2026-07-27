@@ -132,6 +132,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .view-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 .tb-btn{display:flex;align-items:center;gap:5px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);padding:6px 11px;font-family:var(--fb);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .tb-btn:hover{border-color:var(--border2);color:var(--text)}
+.tb-btn.stats-toggle.on{border-color:var(--accent);color:var(--accent);background:var(--surface2)}
+@media(max-width:768px){.stats-toggle-label{display:none}.tb-btn.stats-toggle{padding:6px 9px}.ver-badge{display:none}}
 .tb-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;font-size:13px;padding:6px 13px;gap:5px;box-shadow:0 1px 2px rgba(232,87,26,0.2)}
 .tb-btn.primary:hover{background:#f06424;border-color:#f06424}
 .tb-btn.primary:active{transform:translateY(1px)}
@@ -727,6 +729,11 @@ body.tdrag{user-select:none;-webkit-user-select:none}
       </label>
       <div class="tb-spacer"></div>
       <div class="tb-whoami" id="tbWhoami" title="Signed in"></div>
+      <div class="ver-badge" id="verBadge" title="App version">v—</div>
+      <button class="tb-btn stats-toggle" id="statsToggleBtn" onclick="toggleDashStrip()" title="Show stats">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="7" width="3" height="6" rx="1"/><rect x="5" y="3" width="3" height="10" rx="1"/><rect x="10" y="0" width="3" height="13" rx="1"/></svg>
+        <span class="stats-toggle-label">Stats</span>
+      </button>
       <div class="view-toggle">
         <button class="view-btn active" id="vbList" onclick="setDisplayMode('list')" title="List">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect y="1" width="13" height="2" rx="1"/><rect y="6" width="13" height="2" rx="1"/><rect y="11" width="13" height="2" rx="1"/></svg>
@@ -744,7 +751,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
 
     <div class="filter-chips" id="filterChips" style="display:none"></div>
 
-    <div class="dash-strip">
+    <div class="dash-strip" id="dashStrip" style="display:none">
       <div class="dash-card"><div class="dash-num" id="d-total">0</div><div class="dash-label">Total</div></div>
       <div class="dash-card c-prog"><div class="dash-num" id="d-prog">0</div><div class="dash-label">In Progress</div></div>
       <div class="dash-card c-urgent"><div class="dash-num" id="d-urgent">0</div><div class="dash-label">Urgent</div></div>
@@ -754,7 +761,6 @@ body.tdrag{user-select:none;-webkit-user-select:none}
         <div class="prog-labels"><span>Overall Progress</span><span id="d-pct">0%</span></div>
         <div class="prog-track"><div class="prog-fill" id="d-fill" style="width:0%"></div></div>
       </div>
-      <div class="ver-badge" id="verBadge" title="App version">v—</div>
     </div>
 
     <div class="toolbar">
@@ -1080,8 +1086,8 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.15.0';
-const APP_BUILD='2026-07-26';
+const APP_VERSION='1.16.0';
+const APP_BUILD='2026-07-27';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
 // Poll version.json on load and every 5 minutes. If the deployed
@@ -2901,6 +2907,13 @@ function renderSettings(){
         </div>
         <label class="toggle"><input type="checkbox" id="showSortToggle" ${localStorage.getItem('showSortToolbar')==='1'?'checked':''} onchange="toggleSortToolbar(this.checked)"><span class="toggle-slider"></span></label>
       </div>
+      <div class="space-row" style="flex-wrap:wrap;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div class="space-name" style="font-size:13px;color:var(--text2)">Show stats strip</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Total / In Progress / Urgent / Overdue / Done counts and the overall progress bar. Hidden by default to leave more room for tasks — toggle any time with the Stats button in the top bar.</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="showStatsToggle" ${localStorage.getItem('showDashStrip')==='1'?'checked':''} onchange="toggleDashStrip(this.checked)"><span class="toggle-slider"></span></label>
+      </div>
     </div>
 
     <div class="settings-section">
@@ -3215,7 +3228,20 @@ function toggleSortToolbar(show){
   if(el)el.style.display=show?'flex':'none';
   localStorage.setItem('showSortToolbar',show?'1':'0');
 }
+// Show / hide the stats strip (Total / In Progress / Urgent / Overdue / Done / progress bar)
+function toggleDashStrip(show){
+  const el=document.getElementById('dashStrip');
+  if(!el)return;
+  if(show===undefined)show=el.style.display==='none';
+  el.style.display=show?'flex':'none';
+  localStorage.setItem('showDashStrip',show?'1':'0');
+  const btn=document.getElementById('statsToggleBtn');
+  if(btn){btn.classList.toggle('on',show);btn.title=show?'Hide stats':'Show stats';}
+  const cb=document.getElementById('showStatsToggle');
+  if(cb)cb.checked=show;
+}
 (function(){
+  if(localStorage.getItem('showDashStrip')==='1')toggleDashStrip(true);
   if(localStorage.getItem('showSortToolbar')==='1'){
     const el=document.getElementById('sortToolbarBit');
     if(el)el.style.display='flex';

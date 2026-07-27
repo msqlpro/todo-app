@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.16.0 — 2026-07-27
+- The stats strip (Total / In Progress / Urgent / Overdue / Done and the overall progress bar) is now **hidden by default**, reclaiming roughly 60px of vertical space for the task list on every screen
+- New **Stats** button in the top bar toggles it on and off; the choice is remembered per device (`localStorage`, same pattern as the sort-options toggle). There's also a matching switch in Settings → "Show stats strip"
+- The version badge moved out of the stats strip into the top bar so it stays visible when the strip is collapsed (hidden on mobile widths to save room)
+
 ## v1.15.0 — 2026-07-26
 - Tasks can now be dragged to reorder on a phone or tablet. Drag the ⠿ handle on the left of a row — the handle is now always visible on touch devices (it used to appear only on mouse hover, so on a phone it was invisible)
 - The underlying cause: reordering used the HTML5 drag-and-drop API, which iOS and Android never fire. Touch now drives the same reorder-and-inherit-priority logic the desktop drag always did, so behaviour is identical on both
