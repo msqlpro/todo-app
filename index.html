@@ -24,6 +24,7 @@
   --text:#1c1b18;--text2:#6b6860;--text3:#a09d95;
   --accent:#e8571a;--accent-soft:rgba(232,87,26,0.1);
   --urgent:#dc2626;--urgent-bg:#fef2f2;--urgent-border:#fecaca;
+  --duetoday:#7c3aed;--duetoday-bg:#f5f3ff;--duetoday-border:#ddd6fe;
   --bbc-pink:#ec008c;
   --high:#d97706;--high-bg:#fffbeb;--high-border:#fde68a;
   --medium:#2563eb;--medium-bg:#eff6ff;--medium-border:#bfdbfe;
@@ -146,6 +147,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .filter-chips-label{color:var(--text3);font-weight:600;font-size:11px;letter-spacing:.03em;text-transform:uppercase;margin-right:2px}
 .fc-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 4px 3px 9px;border-radius:5px;background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;line-height:1.2;border:1px solid var(--border)}
 .fc-chip.fc-view{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+.fc-chip.fc-priority-due_today{background:var(--duetoday-bg);color:var(--duetoday);border-color:var(--duetoday-border)}
 .fc-chip.fc-priority-urgent{background:var(--urgent-bg);color:var(--urgent);border-color:var(--urgent-border)}
 .fc-chip.fc-priority-high{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
 .fc-chip.fc-priority-medium{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
@@ -174,6 +176,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .pill{border:1.5px solid var(--border);border-radius:99px;background:var(--surface);padding:3px 10px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap}
 .pill:hover{border-color:var(--border2);color:var(--text)}
 .pill.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.pill.pdt.active{border-color:var(--duetoday);background:var(--duetoday-bg);color:var(--duetoday)}
 .pill.pu.active{border-color:var(--urgent);background:var(--urgent-bg);color:var(--urgent)}
 .pill.ph.active{border-color:var(--high);background:var(--high-bg);color:var(--high)}
 .pill.pm.active{border-color:var(--medium);background:var(--medium-bg);color:var(--medium)}
@@ -210,6 +213,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .pri-dot-wrap{position:relative;flex-shrink:0}
 .pri-dot{width:11px;height:11px;border-radius:50%;cursor:pointer;transition:transform .15s;flex-shrink:0}
 .pri-dot:hover{transform:scale(1.4)}
+.pd-due_today{background:var(--duetoday)}
 .pd-urgent{background:var(--urgent)}
 .pd-high{background:var(--high)}
 .pd-medium{background:var(--medium)}
@@ -343,6 +347,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .gantt-today{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:3;pointer-events:none}
 .gantt-bar{position:absolute;top:9px;height:34px;border-radius:6px;display:flex;align-items:center;padding:0 12px;font-size:13px;font-weight:600;cursor:pointer;z-index:2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:1px solid;transition:filter .15s,transform .1s}
 .gantt-bar:hover{filter:brightness(.96);transform:translateY(-1px)}
+.gantt-bar.p-due_today{background:#f5f3ff;border-color:#ddd6fe;color:#5b21b6}
 .gantt-bar.p-urgent{background:#fef2f2;border-color:#fecaca;color:#991b1b}
 .gantt-bar.p-high{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
 .gantt-bar.p-medium{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
@@ -660,6 +665,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
     <div class="sb-divider"></div>
     <div class="sb-sec">
       <div class="sb-sec-label">Priority</div>
+      <button class="sb-btn" data-view="due_today" onclick="setView(this)"><span style="width:9px;height:9px;border-radius:50%;background:var(--duetoday);display:inline-block;flex-shrink:0"></span>Due Today<span class="sb-badge" id="c-due_today">0</span></button>
       <button class="sb-btn" data-view="urgent" onclick="setView(this)"><span style="width:9px;height:9px;border-radius:50%;background:var(--urgent);display:inline-block;flex-shrink:0"></span>Urgent<span class="sb-badge" id="c-urgent">0</span></button>
       <button class="sb-btn" data-view="high" onclick="setView(this)"><span style="width:9px;height:9px;border-radius:50%;background:var(--high);display:inline-block;flex-shrink:0"></span>High<span class="sb-badge" id="c-high">0</span></button>
       <button class="sb-btn" data-view="medium" onclick="setView(this)"><span style="width:9px;height:9px;border-radius:50%;background:var(--medium);display:inline-block;flex-shrink:0"></span>Medium<span class="sb-badge" id="c-medium">0</span></button>
@@ -779,6 +785,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
       </div>
       <div class="filter-pills">
         <button class="pill active" data-f="all" onclick="onFilter(this)">All</button>
+        <button class="pill pdt" data-f="due_today" onclick="onFilter(this)">🟣 Due Today</button>
         <button class="pill pu" data-f="urgent" onclick="onFilter(this)">🔴 Urgent</button>
         <button class="pill ph" data-f="high" onclick="onFilter(this)">🟠 High</button>
         <button class="pill pm" data-f="medium" onclick="onFilter(this)">🔵 Medium</button>
@@ -806,7 +813,8 @@ body.tdrag{user-select:none;-webkit-user-select:none}
     <div class="qm-row">
       <select class="qm-sel" id="qmPri">
         <option value="none">⚪ Unsorted</option>
-        <option value="urgent">🔴 Urgent</option>
+        <option value="due_today">🟣 Due Today</option>
+          <option value="urgent">🔴 Urgent</option>
         <option value="high">🟠 High</option>
         <option value="medium">🔵 Medium</option>
         <option value="low">🟢 Low</option>
@@ -923,6 +931,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
         <span class="panel-field-label">Priority</span>
         <select class="panel-select" id="panelPriority">
           <option value="none">⚪ Unsorted</option>
+          <option value="due_today">🟣 Due Today</option>
           <option value="urgent">🔴 Urgent</option>
           <option value="high">🟠 High</option>
           <option value="medium">🔵 Medium</option>
@@ -1086,7 +1095,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.16.0';
+const APP_VERSION='1.18.0';
 const APP_BUILD='2026-07-27';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1798,8 +1807,8 @@ function fmtDate(d){
   if(diff<-1)return Math.abs(diff)+'d overdue';if(diff<7)return diff+'d';
   return new Date(d.slice(0,10)+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'});
 }
-function priColor(p){return{urgent:'#dc2626',high:'#d97706',medium:'#2563eb',low:'#16a34a',none:'#cbd5e1'}[p]||'#cbd5e1';}
-function priLabel(p){return{urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'⚪ Unsorted'}[p]||'⚪ Unsorted';}
+function priColor(p){return{due_today:'#7c3aed',urgent:'#dc2626',high:'#d97706',medium:'#2563eb',low:'#16a34a',none:'#cbd5e1'}[p]||'#cbd5e1';}
+function priLabel(p){return{due_today:'🟣 Due Today',urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'⚪ Unsorted'}[p]||'⚪ Unsorted';}
 function spClass(s){return{not_started:'sp-not',in_progress:'sp-prog',stuck:'sp-stuck',done:'sp-done'}[s]||'sp-not';}
 function spLabel(s){return{not_started:'Not Started',in_progress:'In Prog…',stuck:'Stuck',done:'Done'}[s]||'Not Started';}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -1849,6 +1858,7 @@ function updateCounts(){
     const n=+document.getElementById('c-assigned').textContent;
     assignedBtn.style.display=(n>0||curView==='assigned')?'':'none';
   }
+  set('c-due_today',active.filter(t=>t.priority==='due_today').length);
   set('c-urgent',active.filter(t=>t.priority==='urgent').length);
   set('c-high',active.filter(t=>t.priority==='high').length);
   set('c-medium',active.filter(t=>t.priority==='medium').length);
@@ -1868,7 +1878,7 @@ function updateCounts(){
 }
 
 // ── FILTER/SORT ──────────────────────────────────────────────────
-const PRI={urgent:0,high:1,medium:2,low:3,none:4};
+const PRI={due_today:-1,urgent:0,high:1,medium:2,low:3,none:4};
 const STA={stuck:0,in_progress:1,not_started:2,done:3};
 function isAssignedAwayByMe(t){
   return user&&t.user_id===user.id&&t.assigned_to&&t.assigned_to!==user.id;
@@ -1885,6 +1895,7 @@ function getFiltered(){
   else if(curView==='upcoming')list=list.filter(t=>t.due_date&&t.due_date.slice(0,10)>today()&&!t.done&&hideAssignedAway(t));
   else if(curView==='overdue')list=list.filter(t=>isOverdue(t)&&hideAssignedAway(t));
   else if(curView==='projects')list=list.filter(t=>t.start_date&&t.due_date&&!t.done&&hideAssignedAway(t));
+  else if(curView==='due_today')list=list.filter(t=>t.priority==='due_today'&&!t.done&&hideAssignedAway(t));
   else if(curView==='urgent')list=list.filter(t=>t.priority==='urgent'&&!t.done&&hideAssignedAway(t));
   else if(curView==='high')list=list.filter(t=>t.priority==='high'&&!t.done&&hideAssignedAway(t));
   else if(curView==='medium')list=list.filter(t=>t.priority==='medium'&&!t.done&&hideAssignedAway(t));
@@ -1913,6 +1924,7 @@ function getFiltered(){
         if(curView==='upcoming')return t.due_date&&t.due_date.slice(0,10)>today();
         if(curView==='overdue')return isOverdue(t);
         if(curView==='projects')return t.start_date&&t.due_date;
+        if(curView==='due_today')return t.priority==='due_today';
         if(curView==='urgent')return t.priority==='urgent';
         if(curView==='high')return t.priority==='high';
         if(curView==='medium')return t.priority==='medium';
@@ -1976,7 +1988,7 @@ function updateFilterChips(){
   const viewLabels={
     today:'Today',upcoming:'Upcoming',overdue:'Overdue',projects:'Projects',
     inbox:'Inbox',assigned:'Assigned',completed:'Completed',
-    urgent:'Urgent priority',high:'High priority',medium:'Medium priority',low:'Low priority',
+    due_today:'Due Today',urgent:'Urgent priority',high:'High priority',medium:'Medium priority',low:'Low priority',
     in_progress:'In Progress',stuck:'Stuck',events:'Events',settings:'Settings'
   };
   if(curView&&curView!=='all'&&curView!=='dashboard'){
@@ -1985,13 +1997,13 @@ function updateFilterChips(){
       chips.push({cls:'fc-view',label:name+' space',clearFn:'setViewByKey(\'all\')'});
     } else if(viewLabels[curView]){
       // Clicking the chip x goes back to All Tasks
-      const clsMap={urgent:'fc-priority-urgent',high:'fc-priority-high',medium:'fc-priority-medium',low:'fc-priority-low'};
+      const clsMap={due_today:'fc-priority-due_today',urgent:'fc-priority-urgent',high:'fc-priority-high',medium:'fc-priority-medium',low:'fc-priority-low'};
       chips.push({cls:clsMap[curView]||'fc-view',label:viewLabels[curView],clearFn:'setViewByKey(\'all\')'});
     }
   }
   // Priority filter pill (the row above the task list)
   if(filterMode&&filterMode!=='all'){
-    const pMap={urgent:['Urgent','fc-priority-urgent'],high:['High','fc-priority-high'],medium:['Medium','fc-priority-medium'],low:['Low','fc-priority-low'],no_priority:['Unsorted','fc-priority-none'],no_due:['No date','fc-view']};
+    const pMap={due_today:['Due Today','fc-priority-due_today'],urgent:['Urgent','fc-priority-urgent'],high:['High','fc-priority-high'],medium:['Medium','fc-priority-medium'],low:['Low','fc-priority-low'],no_priority:['Unsorted','fc-priority-none'],no_due:['No date','fc-view']};
     const p=pMap[filterMode];
     if(p)chips.push({cls:p[1],label:p[0],clearFn:'clearPriorityFilter()'});
   }
@@ -2110,6 +2122,7 @@ function renderTaskRow(t){
     <div class="pri-dot-wrap">
       <div class="pri-dot pd-${t.priority||'none'}" onclick="openPriMenu('${t.id}',this)" title="Change priority"></div>
       <div class="pri-menu" id="pm-${t.id}">
+        <div class="drop-item" onclick="setPri('${t.id}','due_today')"><span class="drop-dot" style="background:var(--duetoday)"></span>Due Today</div>
         <div class="drop-item" onclick="setPri('${t.id}','urgent')"><span class="drop-dot" style="background:var(--urgent)"></span>Urgent</div>
         <div class="drop-item" onclick="setPri('${t.id}','high')"><span class="drop-dot" style="background:var(--high)"></span>High</div>
         <div class="drop-item" onclick="setPri('${t.id}','medium')"><span class="drop-dot" style="background:var(--medium)"></span>Medium</div>
@@ -2165,6 +2178,7 @@ function renderBoard(){
       if(curView==='upcoming')return t.due_date&&t.due_date.slice(0,10)>today()&&hideAway;
       if(curView==='overdue')return false;
       if(curView==='projects')return t.start_date&&t.due_date&&hideAway;
+      if(curView==='due_today')return t.priority==='due_today'&&hideAway;
       if(curView==='urgent')return t.priority==='urgent'&&hideAway;
       if(curView==='high')return t.priority==='high'&&hideAway;
       if(curView==='medium')return t.priority==='medium'&&hideAway;
@@ -2622,7 +2636,7 @@ let qmGroup='',qmStat='',qmDue='';
 function openQuickAdd(group='',status='not_started',due=''){
   qmGroup=group;qmStat=status;qmDue=due;
   document.getElementById('qmTitle').value='';
-  document.getElementById('qmPri').value='urgent';
+  document.getElementById('qmPri').value=(curView==='due_today')?'due_today':'urgent';
   document.getElementById('qmStat').value=status||'not_started';
   document.getElementById('qmStart').value='';
   document.getElementById('qmDue').value=due||'';
@@ -2699,7 +2713,7 @@ function parseNotes(raw){
 
 // ── UI CONTROLS ──────────────────────────────────────────────────
 const viewTitles={all:'All Tasks',events:'Events',personal:'Personal',work:'Work',settings:'Settings',today:'Today',upcoming:'Upcoming',overdue:'Overdue',projects:'Projects',inbox:'Inbox',assigned:'Assigned',
-  urgent:'Urgent Priority',high:'High Priority',medium:'Medium Priority',low:'Low Priority',
+  due_today:'Due Today',urgent:'Urgent Priority',high:'High Priority',medium:'Medium Priority',low:'Low Priority',
   in_progress:'In Progress',stuck:'Stuck',completed:'Completed'};
 function setView(el){
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
@@ -3397,7 +3411,7 @@ async function performDrop(targetId){
   if(error){toast('Save failed: '+error.message);return;}
 
   if(priorityChanged){
-    const labels={urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'⚪ Unsorted'};
+    const labels={due_today:'🟣 Due Today',urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'⚪ Unsorted'};
     registerUndo(`Priority → ${labels[newPriority]}`,async()=>{
       await updateTodo(dragId,{sort_order:oldSortOrder,priority:oldPriority});
     });

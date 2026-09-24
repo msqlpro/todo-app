@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.18.0 — 2026-09-24
+- New **Due Today** priority (🟣, sits above Urgent): sidebar view with count, filter pill, quick-add / panel / dot-menu options, sorts first in priority sort
+- **Auto-move:** any open task whose Start Date is today is moved into Due Today automatically (DB trigger on insert/start-date change + hourly pg_cron sweep `tadoo-move-start-today`). Original priority is kept in `prev_priority`; `today_moved_on` stops the sweep re-moving a task you've manually moved out the same day
+- **5:45am email** (Europe/London) to mark@brainboxcandy.com listing Mark's open Due Today tasks — edge function `due-today-digest`, cron `tadoo-due-today-digest`. No email when the list is empty
+
 ## v1.16.0 — 2026-07-27
 - The stats strip (Total / In Progress / Urgent / Overdue / Done and the overall progress bar) is now **hidden by default**, reclaiming roughly 60px of vertical space for the task list on every screen
 - New **Stats** button in the top bar toggles it on and off; the choice is remembered per device (`localStorage`, same pattern as the sort-options toggle). There's also a matching switch in Settings → "Show stats strip"
