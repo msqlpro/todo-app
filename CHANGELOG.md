@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.19.0 — 2026-10-01
+- **Events: reminder date.** New optional Reminder Date on the event form (must be on or before the start date). Defaults to **one week before the start date** — follows the start date until you change it yourself. All existing events back-filled to start date − 7 days. Event cards show a 🔔 chip, filled purple once the reminder is live
+- **Events flagged in the app:** a purple banner on open lists events *starting today* and events whose *reminder date has arrived* (until they start). Click an item to open it; × dismisses for the day. Reappears if you add/edit an event that qualifies
+- Events and reminders are also included in the 5:45am email (Claude scheduled task)
+- Fixed: "today" was worked out in UTC, so between midnight and 1am UK summer time the app thought it was still yesterday (affected Today, Overdue and the overdue banner)
+- DB: `events.reminder_date date`
+- Note: v1.18.0 notes said Due Today auto-move used the start date; it uses the **due** date
+
 ## v1.18.0 — 2026-09-24
 - New **Due Today** priority (🟣, sits above Urgent): sidebar view with count, filter pill, quick-add / panel / dot-menu options, sorts first in priority sort
 - **Auto-move:** any open task whose Start Date is today is moved into Due Today automatically (DB trigger on insert/start-date change + hourly pg_cron sweep `tadoo-move-start-today`). Original priority is kept in `prev_priority`; `today_moved_on` stops the sweep re-moving a task you've manually moved out the same day

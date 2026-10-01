@@ -511,6 +511,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .ev-empty-icon{font-size:2.5rem;margin-bottom:10px;opacity:.3}
 .ev-empty-title{font-family:var(--fh);font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:5px}
 .ev-empty-sub{font-size:13px;color:var(--text2)}
+.ev-remind-chip{font-size:11px;font-weight:600;border-radius:4px;padding:2px 7px;background:#f5f3ff;color:#5b21b6}
+.ev-remind-chip.live{background:#7c3aed;color:#fff}
+.ev-banner{background:#f5f3ff;border:1px solid #ddd6fe;border-left:4px solid #7c3aed;margin:10px 20px 0;border-radius:8px;padding:10px 14px;font-size:13px;color:#4c1d95}
+.ev-banner .overdue-banner-dismiss{color:#7c3aed}
+.ev-banner-sub{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6d28d9;margin:8px 0 0}
+.ev-banner ul{list-style:none;margin:4px 0 0;padding:0 0 0 24px}
+.ev-banner li{padding:3px 0;font-weight:500;font-size:12px;cursor:pointer}
+.ev-banner li:hover{text-decoration:underline}
+.ev-banner li .od-when{color:#7c3aed;font-size:11px;margin-left:6px;font-weight:400}
 /* event modal */
 .ev-modal-box{background:var(--surface);border-radius:14px;width:100%;max-width:480px;padding:24px;box-shadow:var(--shadow-lg);transform:translateY(-8px);transition:transform .15s}
 .modal-bg.open .ev-modal-box{transform:translateY(0)}
@@ -719,6 +728,14 @@ body.tdrag{user-select:none;-webkit-user-select:none}
         <button class="overdue-banner-dismiss" onclick="dismissOverdueBanner()" title="Dismiss">×</button>
       </div>
       <ul class="overdue-banner-list" id="overdueBannerList"></ul>
+    </div>
+    <div id="eventsBanner" class="ev-banner" style="display:none">
+      <div class="overdue-banner-head">
+        <span class="overdue-banner-icon">📅</span>
+        <span id="eventsBannerHead"></span>
+        <button class="overdue-banner-dismiss" onclick="dismissEventsBanner()" title="Dismiss for today">×</button>
+      </div>
+      <div id="eventsBannerBody"></div>
     </div>
     <div class="topbar">
       <button class="mob-menu" onclick="toggleMobileSidebar()">
@@ -1041,7 +1058,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
     <div class="ev-field-row">
       <div class="ev-field">
         <label>Start Date</label>
-        <input type="date" id="evDate">
+        <input type="date" id="evDate" onchange="autoEvReminder()">
       </div>
       <div class="ev-field">
         <label>End Date (optional)</label>
@@ -1057,6 +1074,10 @@ body.tdrag{user-select:none;-webkit-user-select:none}
         <label>End Time</label>
         <input type="time" id="evEndTime">
       </div>
+    </div>
+    <div class="ev-field">
+      <label>Reminder Date (optional)</label>
+      <input type="date" id="evReminder" oninput="evReminderAuto=false">
     </div>
     <div class="ev-field">
       <label>Location (optional)</label>
@@ -1095,7 +1116,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.18.0';
+const APP_VERSION='1.19.0';
 const APP_BUILD='2026-07-27';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1365,7 +1386,7 @@ async function loadTodos(){
 }
 function checkOverdueBanner(){
   if(!user)return;
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=today();
   const key='focal_overdueBannerDismissed_'+user.id;
   const lastDismissed=localStorage.getItem(key);
   if(lastDismissed===todayStr)return; // already dismissed today
@@ -1386,7 +1407,7 @@ function checkOverdueBanner(){
   box.style.display='block';
 }
 function dismissOverdueBanner(){
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=today();
   if(user)localStorage.setItem('focal_overdueBannerDismissed_'+user.id,todayStr);
   const box=document.getElementById('overdueBanner');
   if(box)box.style.display='none';
@@ -1791,7 +1812,7 @@ function subscribeRealtime(){
 }
 
 // ── HELPERS ─────────────────────────────────────────────────────
-function today(){return new Date().toISOString().slice(0,10);}
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function defaultToToday(el){if(el&&!el.value)el.value=today();}
 function isOverdue(t){if(!t.due_date||t.done)return false;return t.due_date.slice(0,10)<today();}
 function isDueToday(t){if(!t.due_date)return false;return t.due_date.slice(0,10)===today();}
@@ -3008,7 +3029,39 @@ let events=[], evEditId=null, evColour='blue';
 
 async function loadEvents(){
   const {data,error}=await sb.from('events').select('*').order('date',{ascending:true});
-  if(!error){events=data||[];updateEvCount();if(curView==='events')renderEvents();}
+  if(!error){events=data||[];updateEvCount();checkEventsBanner();if(curView==='events')renderEvents();}
+}
+
+// Events flagged on their start date, and from their reminder date until they start.
+function eventsForBanner(){
+  const t=today();
+  const startToday=events.filter(e=>e.date===t);
+  const reminders=events.filter(e=>e.reminder_date&&e.reminder_date<=t&&e.date>t)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  return {startToday,reminders};
+}
+function checkEventsBanner(force){
+  const box=document.getElementById('eventsBanner');
+  if(!box||!user)return;
+  const key='tadoo_eventsBannerDismissed_'+user.id;
+  let dismissed=null;try{dismissed=localStorage.getItem(key);}catch(e){}
+  const {startToday,reminders}=eventsForBanner();
+  if((dismissed===today()&&!force)||(!startToday.length&&!reminders.length)){box.style.display='none';return;}
+  const fmtT=x=>x?new Date('2000-01-01T'+x).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:true}):'';
+  const fmtD=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+  const li=(e,when)=>`<li onclick="openEvModal('${e.id}')">${esc(e.title)}<span class="od-when">${when}</span></li>`;
+  const parts=[];
+  if(startToday.length)parts.push(`<div class="ev-banner-sub">Starting today</div><ul>${startToday.map(e=>li(e,[e.time?fmtT(e.time):'all day',e.location?'· '+esc(e.location):''].join(' '))).join('')}</ul>`);
+  if(reminders.length)parts.push(`<div class="ev-banner-sub">Reminders — coming up</div><ul>${reminders.map(e=>{const n=daysUntil(e.date);return li(e,`${fmtD(e.date)} (${n===1?'tomorrow':'in '+n+' days'})`);}).join('')}</ul>`);
+  const n1=startToday.length,n2=reminders.length;
+  document.getElementById('eventsBannerHead').textContent=
+    [n1?`${n1} event${n1>1?'s':''} today`:'',n2?`${n2} reminder${n2>1?'s':''}`:''].filter(Boolean).join(' · ');
+  document.getElementById('eventsBannerBody').innerHTML=parts.join('');
+  box.style.display='block';
+}
+function dismissEventsBanner(){
+  try{if(user)localStorage.setItem('tadoo_eventsBannerDismissed_'+user.id,today());}catch(e){}
+  const box=document.getElementById('eventsBanner');if(box)box.style.display='none';
 }
 
 function updateEvCount(){
@@ -3108,6 +3161,7 @@ function renderEvCard(e,isToday){
         ${e.time?`<span class="ev-time-chip">⏰ ${fmtTime(e.time)}${e.end_time?' – '+fmtTime(e.end_time):''}</span>`:'<span style="font-size:12px;color:var(--text3)">All day</span>'}
         ${span>1?`<span class="ev-duration-chip" style="background:${bgMap[col]};color:${txMap[col]}">${span} days</span>`:''}
         ${e.location?`<span class="ev-loc-chip">📍 ${esc(e.location)}</span>`:''}
+        ${e.reminder_date&&!past&&until>0?`<span class="ev-remind-chip ${e.reminder_date<=today()?'live':''}" title="Reminder date">🔔 ${new Date(e.reminder_date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>`:''}
         ${!past&&until>0?`<span class="ev-days-chip">${until===1?'Tomorrow':until+' days away'}</span>`:''}
       </div>
       ${e.notes?`<div style="font-size:11px;color:var(--text3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.notes.slice(0,60))}</div>`:''}
@@ -3129,6 +3183,8 @@ function openEvModal(id){
     document.getElementById('evEndDate').value=e.end_date||'';
     document.getElementById('evTime').value=e.time||'';
     document.getElementById('evEndTime').value=e.end_time||'';
+    document.getElementById('evReminder').value=e.reminder_date||'';
+    evReminderAuto=false;
     document.getElementById('evLocation').value=e.location||'';
     document.getElementById('evNotes').value=e.notes||'';
     evColour=e.colour||'blue';
@@ -3140,6 +3196,8 @@ function openEvModal(id){
     document.getElementById('evEndDate').value='';
     document.getElementById('evTime').value='';
     document.getElementById('evEndTime').value='';
+    document.getElementById('evReminder').value='';
+    evReminderAuto=true;
     document.getElementById('evLocation').value='';
     document.getElementById('evNotes').value='';
     evColour='blue';
@@ -3151,6 +3209,15 @@ function openEvModal(id){
   setTimeout(()=>document.getElementById('evTitle').focus(),60);
 }
 
+// Reminder defaults to one week before the start date; stops following once you edit it yourself.
+let evReminderAuto=true;
+function autoEvReminder(){
+  const d=document.getElementById('evDate').value, r=document.getElementById('evReminder');
+  if(!d||(!evReminderAuto&&r.value))return;
+  const x=new Date(d+'T00:00:00');x.setDate(x.getDate()-7);
+  r.value=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+  evReminderAuto=true;
+}
 function closeEvModal(){document.getElementById('evModal').classList.remove('open');evEditId=null;}
 
 function pickColour(el){
@@ -3163,7 +3230,10 @@ async function submitEvent(){
   const title=document.getElementById('evTitle').value.trim();
   const date=document.getElementById('evDate').value;
   if(!title||!date){toast('Please add a title and date');return;}
+  const reminder=document.getElementById('evReminder').value||null;
+  if(reminder&&reminder>date){toast('Reminder date must be on or before the start date');return;}
   const row={
+    reminder_date:reminder,
     title,date,
     end_date:document.getElementById('evEndDate').value||null,
     time:document.getElementById('evTime').value||null,
@@ -3187,6 +3257,7 @@ async function submitEvent(){
   }
   closeEvModal();
   updateEvCount();
+  checkEventsBanner(true);
   if(curView==='events')renderEvents();
 }
 
@@ -3196,6 +3267,7 @@ async function deleteEvent(id){
   await sb.from('events').delete().eq('id',id);
   events=events.filter(e=>e.id!==id);
   updateEvCount();
+  checkEventsBanner(true);
   if(curView==='events')renderEvents();
   registerUndo('Deleted event — "'+(snap.title||'').slice(0,30)+'"',async()=>{
     const {data,error}=await sb.from('events').insert(snap).select().single();
