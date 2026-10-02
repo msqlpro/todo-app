@@ -520,6 +520,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .ev-banner li{padding:3px 0;font-weight:500;font-size:12px;cursor:pointer}
 .ev-banner li:hover{text-decoration:underline}
 .ev-banner li .od-when{color:#7c3aed;font-size:11px;margin-left:6px;font-weight:400}
+.ev-field label.ev-repeat-lbl{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;margin:0}
+.ev-field label.ev-repeat-lbl input{width:auto;margin:0}
+.ev-repeat-hint{font-size:11px;color:var(--text3);margin-top:3px}
+.ev-repeat-chip{font-size:11px;font-weight:600;border-radius:4px;padding:2px 7px;background:#ecfeff;color:#155e75}
 /* event modal */
 .ev-modal-box{background:var(--surface);border-radius:14px;width:100%;max-width:480px;padding:24px;box-shadow:var(--shadow-lg);transform:translateY(-8px);transition:transform .15s}
 .modal-bg.open .ev-modal-box{transform:translateY(0)}
@@ -1080,6 +1084,10 @@ body.tdrag{user-select:none;-webkit-user-select:none}
       <input type="date" id="evReminder" oninput="evReminderAuto=false">
     </div>
     <div class="ev-field">
+      <label class="ev-repeat-lbl"><input type="checkbox" id="evRepeat"> Repeat every year</label>
+      <div class="ev-repeat-hint">Once this year's date has passed, it moves on to the same date next year.</div>
+    </div>
+    <div class="ev-field">
       <label>Location (optional)</label>
       <input type="text" id="evLocation" placeholder="e.g. Leigh Tennis Club">
     </div>
@@ -1116,7 +1124,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.19.0';
+const APP_VERSION='1.20.0';
 const APP_BUILD='2026-07-27';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -3027,9 +3035,15 @@ async function deleteSpace(id,name){
 // ── EVENTS ─────────────────────────────────────────────────────
 let events=[], evEditId=null, evColour='blue';
 
-async function loadEvents(){
+// Yearly events whose date has passed are rolled to next year (DB function; also runs hourly via pg_cron).
+async function loadEvents(rolled){
   const {data,error}=await sb.from('events').select('*').order('date',{ascending:true});
-  if(!error){events=data||[];updateEvCount();checkEventsBanner();if(curView==='events')renderEvents();}
+  if(error)return;
+  if(!rolled&&(data||[]).some(e=>e.repeat_yearly&&isPastEvent(e))){
+    const r=await sb.rpc('roll_yearly_events');
+    if(!r.error)return loadEvents(true);
+  }
+  events=data||[];updateEvCount();checkEventsBanner();if(curView==='events')renderEvents();
 }
 
 // Events flagged on their start date, and from their reminder date until they start.
@@ -3052,7 +3066,7 @@ function checkEventsBanner(force){
   const li=(e,when)=>`<li onclick="openEvModal('${e.id}')">${esc(e.title)}<span class="od-when">${when}</span></li>`;
   const parts=[];
   if(startToday.length)parts.push(`<div class="ev-banner-sub">Starting today</div><ul>${startToday.map(e=>li(e,[e.time?fmtT(e.time):'all day',e.location?'· '+esc(e.location):''].join(' '))).join('')}</ul>`);
-  if(reminders.length)parts.push(`<div class="ev-banner-sub">Reminders — coming up</div><ul>${reminders.map(e=>{const n=daysUntil(e.date);return li(e,`${fmtD(e.date)} (${n===1?'tomorrow':'in '+n+' days'})`);}).join('')}</ul>`);
+  if(reminders.length)parts.push(`<div class="ev-banner-sub">Reminders: coming up</div><ul>${reminders.map(e=>{const n=daysUntil(e.date);return li(e,`${fmtD(e.date)} (${n===1?'tomorrow':'in '+n+' days'})`);}).join('')}</ul>`);
   const n1=startToday.length,n2=reminders.length;
   document.getElementById('eventsBannerHead').textContent=
     [n1?`${n1} event${n1>1?'s':''} today`:'',n2?`${n2} reminder${n2>1?'s':''}`:''].filter(Boolean).join(' · ');
@@ -3161,6 +3175,7 @@ function renderEvCard(e,isToday){
         ${e.time?`<span class="ev-time-chip">⏰ ${fmtTime(e.time)}${e.end_time?' – '+fmtTime(e.end_time):''}</span>`:'<span style="font-size:12px;color:var(--text3)">All day</span>'}
         ${span>1?`<span class="ev-duration-chip" style="background:${bgMap[col]};color:${txMap[col]}">${span} days</span>`:''}
         ${e.location?`<span class="ev-loc-chip">📍 ${esc(e.location)}</span>`:''}
+        ${e.repeat_yearly?`<span class="ev-repeat-chip" title="Repeats every year">↻ Yearly</span>`:''}
         ${e.reminder_date&&!past&&until>0?`<span class="ev-remind-chip ${e.reminder_date<=today()?'live':''}" title="Reminder date">🔔 ${new Date(e.reminder_date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>`:''}
         ${!past&&until>0?`<span class="ev-days-chip">${until===1?'Tomorrow':until+' days away'}</span>`:''}
       </div>
@@ -3185,6 +3200,7 @@ function openEvModal(id){
     document.getElementById('evEndTime').value=e.end_time||'';
     document.getElementById('evReminder').value=e.reminder_date||'';
     evReminderAuto=false;
+    document.getElementById('evRepeat').checked=!!e.repeat_yearly;
     document.getElementById('evLocation').value=e.location||'';
     document.getElementById('evNotes').value=e.notes||'';
     evColour=e.colour||'blue';
@@ -3198,6 +3214,7 @@ function openEvModal(id){
     document.getElementById('evEndTime').value='';
     document.getElementById('evReminder').value='';
     evReminderAuto=true;
+    document.getElementById('evRepeat').checked=false;
     document.getElementById('evLocation').value='';
     document.getElementById('evNotes').value='';
     evColour='blue';
@@ -3238,6 +3255,7 @@ async function submitEvent(){
     end_date:document.getElementById('evEndDate').value||null,
     time:document.getElementById('evTime').value||null,
     end_time:document.getElementById('evEndTime').value||null,
+    repeat_yearly:document.getElementById('evRepeat').checked,
     location:document.getElementById('evLocation').value||null,
     notes:document.getElementById('evNotes').value||null,
     colour:evColour,
@@ -3256,6 +3274,7 @@ async function submitEvent(){
     toast('Event added ✓');
   }
   closeEvModal();
+  if(row.repeat_yearly&&(row.end_date||row.date)<today()){await loadEvents();toast('Date has passed, moved on to next year');}
   updateEvCount();
   checkEventsBanner(true);
   if(curView==='events')renderEvents();

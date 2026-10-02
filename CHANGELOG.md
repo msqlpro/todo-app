@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.20.0 — 2026-10-02
+- **Yearly events.** New "Repeat every year" tick box on the event form. Only the current occurrence is shown; once its date (or end date) has passed, the event moves on to the same date next year, with its end date and reminder date shifted by the same amount. Cards show a ↻ Yearly chip
+- Rolling forward is done by DB function `roll_yearly_events()`, run hourly by pg_cron (`tadoo-roll-yearly-events`) and also by the app on load, so the 5:45am email always sees the current date
+- Saving a yearly event whose date has already passed moves it straight on to its next date
+- DB: `events.repeat_yearly boolean`
+
 ## v1.19.0 — 2026-10-01
 - **Events: reminder date.** New optional Reminder Date on the event form (must be on or before the start date). Defaults to **one week before the start date** — follows the start date until you change it yourself. All existing events back-filled to start date − 7 days. Event cards show a 🔔 chip, filled purple once the reminder is live
 - **Events flagged in the app:** a purple banner on open lists events *starting today* and events whose *reminder date has arrived* (until they start). Click an item to open it; × dismisses for the day. Reappears if you add/edit an event that qualifies
