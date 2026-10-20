@@ -1124,8 +1124,8 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.20.0';
-const APP_BUILD='2026-07-27';
+const APP_VERSION='1.20.1';
+const APP_BUILD='2026-10-20';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
 // Poll version.json on load and every 5 minutes. If the deployed
@@ -1588,8 +1588,12 @@ async function spawnNextOccurrence(t){
   const minSO=todos.length?Math.min(...todos.map(x=>x.sort_order??0)):0;
   const row={
     text:t.text,done:false,user_id:t.user_id,
-    priority:t.priority||'none',status:'not_started',
+    // 'Due Today' is transient: fall back to what the task was before it moved there
+    priority:(t.priority==='due_today'?((t.prev_priority&&t.prev_priority!=='due_today')?t.prev_priority:'none'):(t.priority||'none')),
+    status:'not_started',
     start_date:null,due_date:isoDate(next),
+    // Stays out of the lists until it's due (still visible in Upcoming and search)
+    show_from:isoDate(next),
     notes:t.notes||null,group_name:t.group_name||'Work',
     sort_order:minSO-1000,assigned_to:t.assigned_to||null,
     repeat_interval:t.repeat_interval,repeat_unit:t.repeat_unit,
@@ -1603,7 +1607,7 @@ async function spawnNextOccurrence(t){
   }
   recurChildren[t.id]=data.id;
   todos.push(data);updateCounts();render();
-  toast('Repeats '+repeatLabel(t.repeat_interval,t.repeat_unit)+' — next one due '+isoDate(next));
+  toast('Repeats '+repeatLabel(t.repeat_interval,t.repeat_unit)+' — hidden until '+isoDate(next)+' (see Upcoming)');
 }
 
 // If a completion is undone, bin the copy we spawned so it doesn't linger.
@@ -1867,7 +1871,7 @@ async function dismissHandback(id){
 // ── COUNTS ──────────────────────────────────────────────────────
 function updateCounts(){
   const set=(id,n)=>{const el=document.getElementById(id);if(el)el.textContent=n;};
-  const active=todos.filter(t=>!t.done);
+  const active=todos.filter(t=>!t.done&&!isParked(t));
   set('c-all',active.length);
   set('c-today',todos.filter(t=>isDueToday(t)&&!t.done).length);
   set('c-upcoming',todos.filter(t=>{if(!t.due_date||t.done)return false;return t.due_date.slice(0,10)>today();}).length);
@@ -1915,8 +1919,12 @@ function isAssignedAwayByMe(t){
 function isAssignedToMe(t){
   return user&&t.assigned_to===user.id&&t.user_id!==user.id;
 }
+// Repeat occurrences spawned ahead of time are parked until show_from.
+function isParked(t){return !t.done&&t.show_from&&t.show_from.slice(0,10)>today();}
 function getFiltered(){
   let list=[...todos];
+  // Parked repeats only show in Upcoming, Completed, or when searching
+  if(!searchQ&&curView!=='upcoming'&&curView!=='completed')list=list.filter(t=>!isParked(t));
   // Tasks I own but have assigned away disappear from my main views
   const hideAssignedAway=t=>!isAssignedAwayByMe(t);
   if(curView==='all')list=list.filter(t=>!t.done&&hideAssignedAway(t));
@@ -2580,6 +2588,8 @@ async function savePanel(){
     notes:document.getElementById('panelNotes').value||null,
     group_name:document.getElementById('panelGroup').value||'Work',
     assigned_to:newAssignedTo,
+    // Editing a parked repeat: keep it hidden until its (possibly new) due date
+    ...(pre&&pre.show_from?{show_from:(document.getElementById('panelDue').value||'').slice(0,10)||null}:{}),
     completed_at:status==='done'?new Date().toISOString():null,
     ...readRepeat('panel'),
   };
@@ -2878,7 +2888,7 @@ function rebuildSpacesSidebar(){
 function updateSpaceCounts(){
   spaces.forEach(sp=>{
     const el=document.getElementById('c-space-'+sp.name);
-    if(el)el.textContent=todos.filter(t=>(t.group_name||'').toLowerCase()===sp.name.toLowerCase()&&!t.done).length;
+    if(el)el.textContent=todos.filter(t=>(t.group_name||'').toLowerCase()===sp.name.toLowerCase()&&!t.done&&!isParked(t)).length;
   });
 }
 

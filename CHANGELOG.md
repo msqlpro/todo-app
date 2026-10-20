@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.20.1 — 2026-10-20
+- Fix: ticking off an "appears when I tick this off" repeat no longer puts the next one straight back in the list. The new occurrence is parked (new `show_from` column) until its due date; it still shows in Upcoming and in search.
+- Fix: the next occurrence no longer inherits the transient Due Today priority; it reverts to the priority it had before (falls back to none). Same fix applied to fixed-schedule repeats in `spawn_due_recurrences()`.
+
 ## v1.20.0 — 2026-10-02
 - **Yearly events.** New "Repeat every year" tick box on the event form. Only the current occurrence is shown; once its date (or end date) has passed, the event moves on to the same date next year, with its end date and reminder date shifted by the same amount. Cards show a ↻ Yearly chip
 - Rolling forward is done by DB function `roll_yearly_events()`, run hourly by pg_cron (`tadoo-roll-yearly-events`) and also by the app on load, so the 5:45am email always sees the current date
