@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.20.2 — 2026-10-26
+- Mobile: new 📅 Events pill in the filter row (next to No date) so Events is one tap away without opening the menu. Tapping any other pill goes back to All Tasks. Hidden on desktop, where Events is already in the sidebar.
+
 ## v1.20.1 — 2026-10-20
 - Fix: ticking off an "appears when I tick this off" repeat no longer puts the next one straight back in the list. The new occurrence is parked (new `show_from` column) until its due date; it still shows in Upcoming and in search.
 - Fix: the next occurrence no longer inherits the transient Due Today priority; it reverts to the priority it had before (falls back to none). Same fix applied to fixed-schedule repeats in `spawn_due_recurrences()`.

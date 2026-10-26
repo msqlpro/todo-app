@@ -175,6 +175,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .filter-pills{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
 .pill{border:1.5px solid var(--border);border-radius:99px;background:var(--surface);padding:3px 10px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap}
 .pill:hover{border-color:var(--border2);color:var(--text)}
+.pill.pev{display:none}
+.pill.pev.active{background:#f1edff;border-color:#7c4dff;color:#5b2fd6;font-weight:600}
+@media(max-width:768px){.pill.pev{display:inline-block}}
 .pill.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
 .pill.pdt.active{border-color:var(--duetoday);background:var(--duetoday-bg);color:var(--duetoday)}
 .pill.pu.active{border-color:var(--urgent);background:var(--urgent-bg);color:var(--urgent)}
@@ -813,6 +816,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
         <button class="pill pl" data-f="low" onclick="onFilter(this)">🟢 Low</button>
         <button class="pill" data-f="no_priority" onclick="onFilter(this)">⚪ Unsorted</button>
         <button class="pill" data-f="no_due" onclick="onFilter(this)">No date</button>
+        <button class="pill pev" id="pillEvents" onclick="onEventsPill()">📅 Events</button>
       </div>
       <div class="tb-spacer2"></div>
       <button class="clear-done-btn" onclick="clearDone()">Clear completed</button>
@@ -1124,7 +1128,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.20.1';
+const APP_VERSION='1.20.2';
 const APP_BUILD='2026-10-20';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -2759,6 +2763,7 @@ function setView(el){
   el.classList.add('active');
   curView=el.dataset.view;
   closeMobileSidebar();
+  syncEventsPill();
   document.getElementById('topbarTitle').textContent=curView.startsWith('space_')?curView.slice(6):(viewTitles[curView]||'Tasks');
   const hideAll=()=>{
     document.getElementById('listView').style.display='none';
@@ -2806,8 +2811,16 @@ function setDisplayMode(m){
 }
 function onSort(){sortMode=document.getElementById('sortSel').value;render();}
 function onFilter(el){
+  // Leaving Events/Settings via a filter pill goes back to All Tasks
+  if(curView==='events'||curView==='settings'){filterMode=el.dataset.f;setViewByKey('all');}
   document.querySelectorAll('.filter-pills .pill').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');filterMode=el.dataset.f;render();
+}
+function onEventsPill(){setViewByKey('events');}
+function syncEventsPill(){
+  const ep=document.getElementById('pillEvents');if(!ep)return;
+  const onEv=curView==='events';
+  document.querySelectorAll('.filter-pills .pill').forEach(p=>p.classList.toggle('active',onEv?p===ep:p.dataset.f===filterMode));
 }
 function onSearch(){searchQ=document.getElementById('searchInput').value.toLowerCase().trim();render();}
 function onSearchIncDoneChange(){
