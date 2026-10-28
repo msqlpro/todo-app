@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.22.1 — 2026-10-28
+- Mobile fix: the Add/Edit Event sheet no longer traps you. It now fits the screen and scrolls inside, Save and Cancel stay pinned at the bottom, there is an × close button top right, and date/time fields no longer spill off the right edge. Escape also closes it on desktop
+
 ## v1.22.0 — 2026-10-28
 - **Events: reminder time.** New Reminder Time beside Reminder Date. The reminder email goes out at that time (accurate to within the hour); with no time set it goes first thing on the reminder date. The 🔔/✉️ chip shows the time
 - Changing the reminder time re-arms the email

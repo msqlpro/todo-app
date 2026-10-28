@@ -537,7 +537,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .ev-field input:focus,.ev-field textarea:focus,.ev-field select:focus{border-color:var(--accent)}
 .ev-field textarea{min-height:70px;resize:vertical;line-height:1.5}
 .ev-field-row{display:flex;gap:10px}
-.ev-field-row .ev-field{flex:1}
+.ev-field-row .ev-field{flex:1;min-width:0}
+/* v1.22.1: keep event sheet inside the screen on mobile */
+.ev-modal-box{max-height:calc(100dvh - 10vh - 16px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;position:relative}
+.ev-modal-box .qm-actions{position:sticky;bottom:-24px;margin:0 -24px -24px;padding:12px 24px calc(12px + env(safe-area-inset-bottom));background:var(--surface);z-index:2}
+.ev-field input[type=date],.ev-field input[type=time]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;min-height:38px}
+.ev-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border:none;border-radius:50%;background:var(--surface2,var(--bg));color:var(--text2);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+@media(max-width:768px){#evModal{padding-top:max(12px,env(safe-area-inset-top))}#evModal .ev-modal-box{max-height:calc(100dvh - max(12px,env(safe-area-inset-top)) - 8px);padding:18px 16px;border-radius:14px}#evModal .ev-modal-box .qm-actions{bottom:-18px;margin:0 -16px -18px;padding:12px 16px calc(12px + env(safe-area-inset-bottom))}#evModal .ev-close{top:10px;right:10px}#evModal .qm-actions button{flex:1;min-height:44px}}
 .ev-colour-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
 .ev-swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s}
 .ev-swatch.sel{border-color:var(--text);transform:scale(1.18)}
@@ -1058,6 +1064,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
 <!-- EVENT MODAL -->
 <div class="modal-bg" id="evModal" onclick="if(event.target===this)closeEvModal()">
   <div class="ev-modal-box">
+    <button class="ev-close" type="button" aria-label="Close" onclick="closeEvModal()">&times;</button>
     <div class="ev-modal-heading" id="evModalHeading">Add Event</div>
     <div class="ev-field">
       <label>Title</label>
@@ -1138,7 +1145,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.22.0';
+const APP_VERSION='1.22.1';
 const APP_BUILD='2026-10-20';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -3273,6 +3280,7 @@ function autoEvReminder(){
   evReminderAuto=true;
 }
 function closeEvModal(){document.getElementById('evModal').classList.remove('open');evEditId=null;}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('evModal')?.classList.contains('open'))closeEvModal();});
 
 function pickColour(el){
   evColour=el.dataset.c;
