@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.22.0 — 2026-10-28
+- **Events: reminder time.** New Reminder Time beside Reminder Date. The reminder email goes out at that time (accurate to within the hour); with no time set it goes first thing on the reminder date. The 🔔/✉️ chip shows the time
+- Changing the reminder time re-arms the email
+- DB: `events.reminder_time text` (HH:MM)
+
 ## v1.21.0 — 2026-10-28
 - **Events: email reminder.** New "Email me on the reminder date" tick box under Reminder Date. When ticked, an email goes to mark@brainboxcandy.com (sent from Gmail) on the reminder date. Cards show ✉️ instead of 🔔 when the email is on
 - Emails are sent by a Claude scheduled task ("Tadoo event reminder emails", about 07:40 and 17:40 UK time), so no mail passwords are stored in the app. A reminder whose date was missed (e.g. added late in the day) is sent on the next run, as long as the event hasn't started
