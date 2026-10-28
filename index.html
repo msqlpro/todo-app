@@ -1086,6 +1086,8 @@ body.tdrag{user-select:none;-webkit-user-select:none}
     <div class="ev-field">
       <label>Reminder Date (optional)</label>
       <input type="date" id="evReminder" oninput="evReminderAuto=false">
+      <label class="ev-repeat-lbl" style="margin-top:8px"><input type="checkbox" id="evEmailRem"> Email me on the reminder date</label>
+      <div class="ev-repeat-hint">Sent to mark@brainboxcandy.com from Gmail, early morning on the reminder date.</div>
     </div>
     <div class="ev-field">
       <label class="ev-repeat-lbl"><input type="checkbox" id="evRepeat"> Repeat every year</label>
@@ -1128,7 +1130,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.20.2';
+const APP_VERSION='1.21.0';
 const APP_BUILD='2026-10-20';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -3199,7 +3201,7 @@ function renderEvCard(e,isToday){
         ${span>1?`<span class="ev-duration-chip" style="background:${bgMap[col]};color:${txMap[col]}">${span} days</span>`:''}
         ${e.location?`<span class="ev-loc-chip">📍 ${esc(e.location)}</span>`:''}
         ${e.repeat_yearly?`<span class="ev-repeat-chip" title="Repeats every year">↻ Yearly</span>`:''}
-        ${e.reminder_date&&!past&&until>0?`<span class="ev-remind-chip ${e.reminder_date<=today()?'live':''}" title="Reminder date">🔔 ${new Date(e.reminder_date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>`:''}
+        ${e.reminder_date&&!past&&until>0?`<span class="ev-remind-chip ${e.reminder_date<=today()?'live':''}" title="${e.email_reminder?'Reminder date, email on':'Reminder date'}">${e.email_reminder?'✉️':'🔔'} ${new Date(e.reminder_date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>`:''}
         ${!past&&until>0?`<span class="ev-days-chip">${until===1?'Tomorrow':until+' days away'}</span>`:''}
       </div>
       ${e.notes?`<div style="font-size:11px;color:var(--text3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.notes.slice(0,60))}</div>`:''}
@@ -3224,6 +3226,7 @@ function openEvModal(id){
     document.getElementById('evReminder').value=e.reminder_date||'';
     evReminderAuto=false;
     document.getElementById('evRepeat').checked=!!e.repeat_yearly;
+    document.getElementById('evEmailRem').checked=!!e.email_reminder;
     document.getElementById('evLocation').value=e.location||'';
     document.getElementById('evNotes').value=e.notes||'';
     evColour=e.colour||'blue';
@@ -3238,6 +3241,7 @@ function openEvModal(id){
     document.getElementById('evReminder').value='';
     evReminderAuto=true;
     document.getElementById('evRepeat').checked=false;
+    document.getElementById('evEmailRem').checked=false;
     document.getElementById('evLocation').value='';
     document.getElementById('evNotes').value='';
     evColour='blue';
@@ -3272,6 +3276,8 @@ async function submitEvent(){
   if(!title||!date){toast('Please add a title and date');return;}
   const reminder=document.getElementById('evReminder').value||null;
   if(reminder&&reminder>date){toast('Reminder date must be on or before the start date');return;}
+  const emailRem=document.getElementById('evEmailRem').checked;
+  if(emailRem&&!reminder){toast('Add a reminder date for the email');return;}
   const row={
     reminder_date:reminder,
     title,date,
@@ -3279,6 +3285,7 @@ async function submitEvent(){
     time:document.getElementById('evTime').value||null,
     end_time:document.getElementById('evEndTime').value||null,
     repeat_yearly:document.getElementById('evRepeat').checked,
+    email_reminder:emailRem,
     location:document.getElementById('evLocation').value||null,
     notes:document.getElementById('evNotes').value||null,
     colour:evColour,

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.21.0 — 2026-10-28
+- **Events: email reminder.** New "Email me on the reminder date" tick box under Reminder Date. When ticked, an email goes to mark@brainboxcandy.com (sent from Gmail) on the reminder date. Cards show ✉️ instead of 🔔 when the email is on
+- Emails are sent by a Claude scheduled task ("Tadoo event reminder emails", about 07:40 and 17:40 UK time), so no mail passwords are stored in the app. A reminder whose date was missed (e.g. added late in the day) is sent on the next run, as long as the event hasn't started
+- Each reminder emails once. Changing the reminder date, or the yearly roll-forward, re-arms it automatically (DB trigger `trg_events_reset_reminder_email`)
+- DB: `events.email_reminder boolean`, `events.reminder_emailed_on date`
+
 ## v1.20.2 — 2026-10-26
 - Mobile: new 📅 Events pill in the filter row (next to No date) so Events is one tap away without opening the menu. Tapping any other pill goes back to All Tasks. Hidden on desktop, where Events is already in the sidebar.
 
