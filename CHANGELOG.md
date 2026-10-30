@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.22.2 — 2026-10-30
+- Mobile fix: the ✕ delete button on event cards is now always visible on touch screens (it previously only appeared on mouse hover), with a bigger tap area
+- New Delete button in the Edit Event sheet (left of Cancel). Deleting still shows the Undo toast
+
 ## v1.22.1 — 2026-10-28
 - Mobile fix: the Add/Edit Event sheet no longer traps you. It now fits the screen and scrolls inside, Save and Cancel stay pinned at the bottom, there is an × close button top right, and date/time fields no longer spill off the right edge. Escape also closes it on desktop
 

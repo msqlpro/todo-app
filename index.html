@@ -510,6 +510,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .ev-del-btn{position:absolute;right:10px;top:10px;opacity:0;border:none;background:transparent;color:var(--text3);cursor:pointer;padding:3px 6px;border-radius:5px;font-size:13px;transition:all .15s}
 .ev-card:hover .ev-del-btn{opacity:1}
 .ev-del-btn:hover{color:var(--urgent);background:var(--urgent-bg)}
+/* v1.22.2: touch screens can't hover, so always show the delete button with a bigger tap area */
+@media(hover:none){.ev-del-btn{opacity:.7;right:4px;top:4px;min-width:36px;min-height:36px;font-size:15px;padding:6px 10px}}
+.ev-del-modal{margin-right:auto;border:1px solid var(--urgent);background:transparent;color:var(--urgent);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.ev-del-modal:hover{background:var(--urgent-bg)}
 .ev-empty{text-align:center;padding:50px 20px}
 .ev-empty-icon{font-size:2.5rem;margin-bottom:10px;opacity:.3}
 .ev-empty-title{font-family:var(--fh);font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:5px}
@@ -1129,6 +1133,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
       </div>
     </div>
     <div class="qm-actions">
+      <button class="ev-del-modal" id="evDelBtn" type="button" onclick="deleteFromEvModal()" style="display:none">Delete</button>
       <button class="btn-cancel" onclick="closeEvModal()">Cancel</button>
       <button class="btn-add" id="evSaveBtn" onclick="submitEvent()">Save Event</button>
     </div>
@@ -1145,8 +1150,8 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.22.1';
-const APP_BUILD='2026-10-20';
+const APP_VERSION='1.22.2';
+const APP_BUILD='2026-10-30';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
 // Poll version.json on load and every 5 minutes. If the deployed
@@ -3226,6 +3231,7 @@ function renderEvCard(e,isToday){
 
 function openEvModal(id){
   evEditId=id||null;
+  const delBtn=document.getElementById('evDelBtn');if(delBtn)delBtn.style.display=id?'':'none';
   const heading=document.getElementById('evModalHeading');
   const saveBtn=document.getElementById('evSaveBtn');
   if(id){
@@ -3278,6 +3284,12 @@ function autoEvReminder(){
   const x=new Date(d+'T00:00:00');x.setDate(x.getDate()-7);
   r.value=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
   evReminderAuto=true;
+}
+async function deleteFromEvModal(){
+  if(!evEditId)return;
+  const id=evEditId;
+  closeEvModal();
+  await deleteEvent(id);
 }
 function closeEvModal(){document.getElementById('evModal').classList.remove('open');evEditId=null;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('evModal')?.classList.contains('open'))closeEvModal();});
