@@ -1150,8 +1150,8 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.22.2';
-const APP_BUILD='2026-10-30';
+const APP_VERSION='1.22.3';
+const APP_BUILD='2026-11-07';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
 // Poll version.json on load and every 5 minutes. If the deployed
@@ -1293,7 +1293,7 @@ async function sweepFixedRecurrences(force){
 }
 // Catch the app being left open overnight.
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible')sweepFixedRecurrences(false);
+  if(document.visibilityState==='visible'){sweepFixedRecurrences(false);if(user)loadEvents();}
 });
 
 function showApp(){
@@ -1833,6 +1833,7 @@ function subscribeRealtime(){
   if(rtChannel){try{sb.removeChannel(rtChannel);}catch(e){}rtChannel=null;}
   rtChannel=sb.channel('todos-rt')
     .on('postgres_changes',{event:'*',schema:'public',table:'todos'},applyRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'events'},()=>{clearTimeout(window._evRt);window._evRt=setTimeout(()=>loadEvents(),500);})
     .subscribe(s=>{
       if(s==='SUBSCRIBED'){
         setSync('live','live');

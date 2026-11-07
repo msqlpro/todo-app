@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.22.3 — 2026-11-07
+- Events now refresh when you come back to the app (e.g. switching back to it on your phone), and update live when events are added or changed elsewhere. Previously they only loaded when the app first opened
+
 ## v1.22.2 — 2026-10-30
 - Mobile fix: the ✕ delete button on event cards is now always visible on touch screens (it previously only appeared on mouse hover), with a bigger tap area
 - New Delete button in the Edit Event sheet (left of Cancel). Deleting still shows the Undo toast
