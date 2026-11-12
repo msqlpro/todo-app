@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.22.4 — 2026-11-12
+- Events: the Reminder Date now defaults to the event's start date (it used to default to one week before). You can still change it to any earlier date; existing events are unchanged
+
 ## v1.22.3 — 2026-11-07
 - Events now refresh when you come back to the app (e.g. switching back to it on your phone), and update live when events are added or changed elsewhere. Previously they only loaded when the app first opened
 

@@ -1150,7 +1150,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.22.3';
+const APP_VERSION='1.22.4';
 const APP_BUILD='2026-11-07';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -3277,13 +3277,12 @@ function openEvModal(id){
   setTimeout(()=>document.getElementById('evTitle').focus(),60);
 }
 
-// Reminder defaults to one week before the start date; stops following once you edit it yourself.
+// Reminder defaults to the event's start date; stops following once you edit it yourself.
 let evReminderAuto=true;
 function autoEvReminder(){
   const d=document.getElementById('evDate').value, r=document.getElementById('evReminder');
   if(!d||(!evReminderAuto&&r.value))return;
-  const x=new Date(d+'T00:00:00');x.setDate(x.getDate()-7);
-  r.value=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+  r.value=d;
   evReminderAuto=true;
 }
 async function deleteFromEvModal(){
