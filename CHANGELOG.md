@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.23.1 — 2026-11-14
+- Events page: the + Add Event button now sits directly beside the "Events" heading instead of over on the far right of the screen
+
 ## v1.23.0 — 2026-11-14
 - **Duplicate an event.** New Duplicate button in the Edit Event sheet (next to Delete). It makes a copy with the same title, times, location, notes, colour and reminder settings and a blank date: pick the new date and press Save Copy. The original event is left as it was
 - If the original ran over several days, or had its reminder set some days ahead, the copy keeps the same length and the same reminder gap from the new date (both can still be changed before saving)

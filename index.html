@@ -478,7 +478,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 
 /* EVENTS */
 .events-wrap{padding:16px 20px;flex:1;overflow-y:auto}
-.ev-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.ev-topbar{display:flex;align-items:center;justify-content:flex-start;gap:12px;margin-bottom:20px}
 .ev-section-title{font-family:var(--fh);font-size:1rem;font-weight:700}
 .ev-add-btn{display:flex;align-items:center;gap:6px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s}
 .ev-add-btn:hover{opacity:.88}
@@ -1153,7 +1153,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.23.0';
+const APP_VERSION='1.23.1';
 const APP_BUILD='2026-11-14';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
