@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.23.0 — 2026-11-14
+- **Duplicate an event.** New Duplicate button in the Edit Event sheet (next to Delete). It makes a copy with the same title, times, location, notes, colour and reminder settings and a blank date: pick the new date and press Save Copy. The original event is left as it was
+- If the original ran over several days, or had its reminder set some days ahead, the copy keeps the same length and the same reminder gap from the new date (both can still be changed before saving)
+
 ## v1.22.4 — 2026-11-12
 - Events: the Reminder Date now defaults to the event's start date (it used to default to one week before). You can still change it to any earlier date; existing events are unchanged
 

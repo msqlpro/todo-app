@@ -514,6 +514,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 @media(hover:none){.ev-del-btn{opacity:.7;right:4px;top:4px;min-width:36px;min-height:36px;font-size:15px;padding:6px 10px}}
 .ev-del-modal{margin-right:auto;border:1px solid var(--urgent);background:transparent;color:var(--urgent);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
 .ev-del-modal:hover{background:var(--urgent-bg)}
+.ev-dup-modal{border:1.5px solid var(--border);background:transparent;color:var(--text);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ev-dup-modal:hover{background:var(--surface2)}
 .ev-empty{text-align:center;padding:50px 20px}
 .ev-empty-icon{font-size:2.5rem;margin-bottom:10px;opacity:.3}
 .ev-empty-title{font-family:var(--fh);font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:5px}
@@ -547,7 +549,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .ev-modal-box .qm-actions{position:sticky;bottom:-24px;margin:0 -24px -24px;padding:12px 24px calc(12px + env(safe-area-inset-bottom));background:var(--surface);z-index:2}
 .ev-field input[type=date],.ev-field input[type=time]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;min-height:38px}
 .ev-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border:none;border-radius:50%;background:var(--surface2,var(--bg));color:var(--text2);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
-@media(max-width:768px){#evModal{padding-top:max(12px,env(safe-area-inset-top))}#evModal .ev-modal-box{max-height:calc(100dvh - max(12px,env(safe-area-inset-top)) - 8px);padding:18px 16px;border-radius:14px}#evModal .ev-modal-box .qm-actions{bottom:-18px;margin:0 -16px -18px;padding:12px 16px calc(12px + env(safe-area-inset-bottom))}#evModal .ev-close{top:10px;right:10px}#evModal .qm-actions button{flex:1;min-height:44px}}
+@media(max-width:768px){#evModal{padding-top:max(12px,env(safe-area-inset-top))}#evModal .ev-modal-box{max-height:calc(100dvh - max(12px,env(safe-area-inset-top)) - 8px);padding:18px 16px;border-radius:14px}#evModal .ev-modal-box .qm-actions{bottom:-18px;margin:0 -16px -18px;padding:12px 16px calc(12px + env(safe-area-inset-bottom))}#evModal .ev-close{top:10px;right:10px}#evModal .qm-actions button{flex:1;min-height:44px;padding-left:8px;padding-right:8px;white-space:nowrap}}
 .ev-colour-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
 .ev-swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s}
 .ev-swatch.sel{border-color:var(--text);transform:scale(1.18)}
@@ -1077,7 +1079,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
     <div class="ev-field-row">
       <div class="ev-field">
         <label>Start Date</label>
-        <input type="date" id="evDate" onchange="autoEvReminder()">
+        <input type="date" id="evDate" onchange="applyEvDupDates();autoEvReminder()">
       </div>
       <div class="ev-field">
         <label>End Date (optional)</label>
@@ -1134,6 +1136,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
     </div>
     <div class="qm-actions">
       <button class="ev-del-modal" id="evDelBtn" type="button" onclick="deleteFromEvModal()" style="display:none">Delete</button>
+      <button class="ev-dup-modal" id="evDupBtn" type="button" onclick="duplicateFromEvModal()" style="display:none" title="Copy this event to another date">Duplicate</button>
       <button class="btn-cancel" onclick="closeEvModal()">Cancel</button>
       <button class="btn-add" id="evSaveBtn" onclick="submitEvent()">Save Event</button>
     </div>
@@ -1150,8 +1153,8 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.22.4';
-const APP_BUILD='2026-11-12';
+const APP_VERSION='1.23.0';
+const APP_BUILD='2026-11-14';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
 // Poll version.json on load and every 5 minutes. If the deployed
@@ -3233,6 +3236,8 @@ function renderEvCard(e,isToday){
 function openEvModal(id){
   evEditId=id||null;
   const delBtn=document.getElementById('evDelBtn');if(delBtn)delBtn.style.display=id?'':'none';
+  const dupBtn=document.getElementById('evDupBtn');if(dupBtn)dupBtn.style.display=id?'':'none';
+  evDup=null;
   const heading=document.getElementById('evModalHeading');
   const saveBtn=document.getElementById('evSaveBtn');
   if(id){
@@ -3285,13 +3290,44 @@ function autoEvReminder(){
   r.value=d;
   evReminderAuto=true;
 }
+// Duplicate: turns the open Edit sheet into a new event with the same details and a blank date.
+// The original is left untouched (any unsaved edits in the sheet go to the copy only).
+let evDup=null;
+function evDayDiff(a,b){return Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/86400000);}
+function evAddDays(d,n){const x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10);}
+function duplicateFromEvModal(){
+  if(!evEditId)return;
+  const g=id=>document.getElementById(id);
+  const d=g('evDate').value,end=g('evEndDate').value,rem=g('evReminder').value;
+  // remember how long the event runs and how far ahead the reminder is, to re-apply on the new date
+  evDup={span:d&&end&&end>=d?evDayDiff(d,end):null,remOffset:d&&rem&&rem<d?evDayDiff(rem,d):null};
+  evEditId=null;
+  g('evModalHeading').textContent='Duplicate Event';
+  g('evSaveBtn').textContent='Save Copy';
+  g('evDelBtn').style.display='none';
+  g('evDupBtn').style.display='none';
+  g('evDate').value='';
+  g('evEndDate').value='';
+  g('evReminder').value='';
+  evReminderAuto=true;
+  toast('Pick the new date, then Save Copy');
+  const box=document.querySelector('#evModal .ev-modal-box');if(box)box.scrollTop=0;
+  setTimeout(()=>{const el=g('evDate');el.focus();try{el.showPicker&&el.showPicker();}catch(_){}},60);
+}
+function applyEvDupDates(){
+  if(!evDup)return;
+  const g=id=>document.getElementById(id),d=g('evDate').value;
+  if(!d)return;
+  if(evDup.span!==null)g('evEndDate').value=evAddDays(d,evDup.span);
+  if(evDup.remOffset!==null){g('evReminder').value=evAddDays(d,-evDup.remOffset);evReminderAuto=false;}
+}
 async function deleteFromEvModal(){
   if(!evEditId)return;
   const id=evEditId;
   closeEvModal();
   await deleteEvent(id);
 }
-function closeEvModal(){document.getElementById('evModal').classList.remove('open');evEditId=null;}
+function closeEvModal(){document.getElementById('evModal').classList.remove('open');evEditId=null;evDup=null;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('evModal')?.classList.contains('open'))closeEvModal();});
 
 function pickColour(el){
@@ -3323,6 +3359,7 @@ async function submitEvent(){
     colour:evColour,
     user_id:user.id
   };
+  const wasDup=!!evDup;
   if(evEditId){
     const {error}=await sb.from('events').update(row).eq('id',evEditId);
     if(error){toast('Save failed: '+error.message);return;}
@@ -3333,7 +3370,7 @@ async function submitEvent(){
     const {data,error}=await sb.from('events').insert(row).select().single();
     if(error){toast('Could not save: '+error.message);return;}
     events.push(data);
-    toast('Event added ✓');
+    toast(wasDup?'Event duplicated ✓':'Event added ✓');
   }
   closeEvModal();
   if(row.repeat_yearly&&(row.end_date||row.date)<today()){await loadEvents();toast('Date has passed, moved on to next year');}
