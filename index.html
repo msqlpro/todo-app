@@ -254,6 +254,22 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .sp-prog{background:var(--s-prog-bg);color:var(--s-prog)}
 .sp-stuck{background:var(--s-stuck-bg);color:var(--s-stuck)}
 .sp-done{background:var(--s-done-bg);color:var(--s-done)}
+.sp-mini{display:none}
+/* Phones: the status pill shrinks to a small coloured marker so the task text
+   gets the width. Hollow ring = Not Started, half-filled = In Progress,
+   ! = Stuck, tick = Done. Tapping it still opens the status menu. */
+@media(max-width:768px){
+  .task-text-wrap{max-width:none}
+  .status-wrap .sp{position:relative;width:18px;height:18px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;line-height:1;border:2px solid currentColor;background:transparent;box-sizing:border-box;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .status-wrap .sp::after{content:'';position:absolute;inset:-12px -5px}
+  .status-wrap .sp .sp-full{display:none}
+  .status-wrap .sp .sp-mini{display:block}
+  .status-wrap .sp-not{border-color:var(--border2)}
+  .status-wrap .sp-prog{background:linear-gradient(90deg,currentColor 50%,transparent 50%)}
+  .status-wrap .sp-stuck{background:var(--s-stuck);border-color:var(--s-stuck)}
+  .status-wrap .sp-stuck .sp-mini,.status-wrap .sp-done .sp-mini{color:#fff}
+  .status-wrap .sp-done{background:var(--s-done);border-color:var(--s-done)}
+}
 
 /* Generic dropdown menu */
 .drop-menu{position:absolute;right:0;top:calc(100% + 5px);background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);padding:5px;z-index:300;min-width:150px;display:none}
@@ -1160,7 +1176,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.23.2';
+const APP_VERSION='1.23.3';
 const APP_BUILD='2026-11-14';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
@@ -1881,6 +1897,8 @@ function priColor(p){return{due_today:'#7c3aed',urgent:'#dc2626',high:'#d97706',
 function priLabel(p){return{due_today:'🟣 Due Today',urgent:'🔴 Urgent',high:'🟠 High',medium:'🔵 Medium',low:'🟢 Low',none:'⚪ Unsorted'}[p]||'⚪ Unsorted';}
 function spClass(s){return{not_started:'sp-not',in_progress:'sp-prog',stuck:'sp-stuck',done:'sp-done'}[s]||'sp-not';}
 function spLabel(s){return{not_started:'Not Started',in_progress:'In Prog…',stuck:'Stuck',done:'Done'}[s]||'Not Started';}
+function spFull(s){return{not_started:'Not Started',in_progress:'In Progress',stuck:'Stuck',done:'Done'}[s]||'Not Started';}
+function spMini(s){return{not_started:'',in_progress:'',stuck:'!',done:'✓'}[s]||'';}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function assignChip(t){
   if(!user)return '';
@@ -2219,7 +2237,7 @@ function renderTaskRow(t){
           onblur="this.classList.remove('open')">
       </div>`:''}
       <div class="status-wrap">
-        <div class="sp ${spClass(t.status)}" onclick="openStatusMenu('${t.id}',this)">${spLabel(t.status)}</div>
+        <div class="sp ${spClass(t.status)}" onclick="openStatusMenu('${t.id}',this)" title="Status: ${spFull(t.status)}" aria-label="Status: ${spFull(t.status)}"><span class="sp-full">${spLabel(t.status)}</span><span class="sp-mini" aria-hidden="true">${spMini(t.status)}</span></div>
         <div class="drop-menu" id="sm-${t.id}">
           <div class="drop-item" onclick="setStatus('${t.id}','not_started')"><span class="drop-dot" style="background:var(--s-not)"></span>Not Started</div>
           <div class="drop-item" onclick="setStatus('${t.id}','in_progress')"><span class="drop-dot" style="background:var(--s-prog)"></span>In Progress</div>

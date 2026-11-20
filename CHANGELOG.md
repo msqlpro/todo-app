@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.23.3 — 2026-11-20
+- Mobile: the status pill ("Not Started" etc.) on each task row is now a small round marker, so much more of the task description is readable. Hollow ring = Not Started, half-filled blue = In Progress, red ! = Stuck, green tick = Done. Tap it to change the status as before
+- Mobile: the task description is no longer capped at about half the row width
+- Desktop is unchanged
+
 ## v1.23.2 — 2026-11-20
 - Mobile fix: ticking a task off now works on the first tap. The first tap on a row was being swallowed on iPhone (it was treated as a "hover" that revealed the ✕ delete button), so it took two
 - The tick circle is bigger on touch screens (26px, was 20px) with a much larger tap area around it
