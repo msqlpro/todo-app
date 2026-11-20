@@ -42,7 +42,8 @@
   --ui-fs:13px;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px;line-height:1.5;min-height:100vh}
-.update-banner{background:var(--bbc-pink,#ec008c);color:#fff;padding:10px 16px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s;flex-shrink:0}
+/* Shown as a band across the middle of the screen so it can't be missed */
+.update-banner{background:var(--bbc-pink,#ec008c);color:#fff;padding:18px 16px;text-align:center;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s;position:fixed;left:0;right:0;top:50%;transform:translateY(-50%);z-index:5000;box-shadow:0 8px 30px rgba(0,0,0,.35)}
 .update-banner:hover{opacity:.92}
 .update-banner-icon{display:inline-block;font-size:15px}
 .update-banner u{text-decoration-thickness:1.5px;text-underline-offset:2px}
@@ -134,7 +135,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .tb-btn{display:flex;align-items:center;gap:5px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);padding:6px 11px;font-family:var(--fb);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .tb-btn:hover{border-color:var(--border2);color:var(--text)}
 .tb-btn.stats-toggle.on{border-color:var(--accent);color:var(--accent);background:var(--surface2)}
-@media(max-width:768px){.stats-toggle-label{display:none}.tb-btn.stats-toggle{padding:6px 9px}.ver-badge{display:none}}
+/* Phones: the version sits as small text in the top right corner of the top bar */
+@media(max-width:768px){.stats-toggle-label{display:none}.tb-btn.stats-toggle{padding:6px 9px}.topbar .ver-badge{position:absolute;top:1px;right:6px;padding:0;border:0;background:transparent;font-size:9px;line-height:1;opacity:.7;pointer-events:none;z-index:2}}
 .tb-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;font-size:13px;padding:6px 13px;gap:5px;box-shadow:0 1px 2px rgba(232,87,26,0.2)}
 .tb-btn.primary:hover{background:#f06424;border-color:#f06424}
 .tb-btn.primary:active{transform:translateY(1px)}
@@ -761,7 +763,7 @@ body.tdrag{user-select:none;-webkit-user-select:none}
   <div class="main" id="mainContent">
     <div id="updateBanner" class="update-banner" style="display:none" onclick="applyUpdate()">
       <span class="update-banner-icon">⟳</span>
-      <span>A new version is available — <u>click to refresh</u></span>
+      <span>A new version is available. <u>Tap to refresh</u></span>
     </div>
     <div id="overdueBanner" class="overdue-banner" style="display:none">
       <div class="overdue-banner-head">
@@ -1176,7 +1178,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.23.4';
+const APP_VERSION='1.23.5';
 const APP_BUILD='2026-11-20';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────

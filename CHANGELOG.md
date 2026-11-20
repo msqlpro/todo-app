@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.23.5 — 2026-11-20
+- The "new version available" banner now appears as a pink band across the middle of the screen instead of a strip at the top, so it can't be missed. Tap it to refresh
+- Mobile: the version number now shows in small text at the top right of the top bar (it was hidden on phones)
+
 ## v1.23.4 — 2026-11-20
 - Mobile: the round status marker on each task row is now a solid colour instead of a hollow ring, so it no longer looks like the tick circle. Grey = Not Started, blue = In Progress, red ! = Stuck, green tick = Done
 - The "new version available" banner is now also checked when the app is reopened or regains focus, so it shows more reliably on iPhone after an update
