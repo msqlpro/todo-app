@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.23.2 — 2026-11-20
+- Mobile fix: ticking a task off now works on the first tap. The first tap on a row was being swallowed on iPhone (it was treated as a "hover" that revealed the ✕ delete button), so it took two
+- The tick circle is bigger on touch screens (26px, was 20px) with a much larger tap area around it
+- On touch screens the ✕ delete button on task rows is now always faintly visible, as it already is on event cards
+
 ## v1.23.1 — 2026-11-14
 - Events page: the + Add Event button now sits directly beside the "Events" heading instead of over on the far right of the screen
 

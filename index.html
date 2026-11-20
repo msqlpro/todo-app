@@ -209,7 +209,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 
 /* Circle checkbox */
 .check-circle{width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);background:transparent;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:transparent;font-size:11px;font-weight:700}
-.check-circle:hover{border-color:var(--s-done);background:rgba(22,163,74,0.08)}
+@media(hover:hover){.check-circle:hover{border-color:var(--s-done);background:rgba(22,163,74,0.08)}}
 .task-row.done-row .check-circle{background:var(--s-done);border-color:var(--s-done);color:#fff}
 
 /* Priority dot - clickable */
@@ -267,7 +267,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .pri-menu.open{display:block}
 
 .del-btn{opacity:0;border:none;background:transparent;color:var(--text3);cursor:pointer;padding:3px 5px;border-radius:5px;transition:all .15s;flex-shrink:0;font-size:14px}
-.task-row:hover .del-btn{opacity:1}
+@media(hover:hover){.task-row:hover .del-btn{opacity:1}}
 .restore-btn{border:1.5px solid var(--s-done);background:transparent;color:var(--s-done);cursor:pointer;padding:3px 10px;border-radius:6px;font-family:var(--fb);font-size:11px;font-weight:700;flex-shrink:0;transition:all .15s;white-space:nowrap}
 .restore-btn:hover{background:var(--s-done-bg)}
 .assign-chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap;flex-shrink:0;letter-spacing:.01em;display:inline-flex;align-items:center;gap:4px}
@@ -594,8 +594,15 @@ body.tdrag{user-select:none;-webkit-user-select:none}
 @media(hover:none){
   .drag-handle{opacity:.5;font-size:19px;padding:0 9px 0 3px}
   .drag-handle:active{opacity:1;color:var(--accent)}
+  /* Touch screens: bigger tick circle with a 44px tap area. The delete ✕ is
+     always visible here, because revealing it on :hover made iOS swallow the
+     first tap on a row as a "hover", so ticking a task took two taps. */
+  .check-circle{width:26px;height:26px;font-size:14px;position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .check-circle::after{content:'';position:absolute;inset:-9px}
+  .check-circle:active{border-color:var(--s-done);background:rgba(22,163,74,0.15)}
+  .del-btn{opacity:.55}
 }
-.task-row:hover .drag-handle{opacity:1}
+@media(hover:hover){.task-row:hover .drag-handle{opacity:1}}
 .drag-handle:active{cursor:grabbing;color:var(--accent)}
 .pri-adopt-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .pri-adopt-toast.show{opacity:1}
@@ -1153,7 +1160,7 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.23.1';
+const APP_VERSION='1.23.2';
 const APP_BUILD='2026-11-14';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
