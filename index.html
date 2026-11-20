@@ -256,18 +256,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .sp-done{background:var(--s-done-bg);color:var(--s-done)}
 .sp-mini{display:none}
 /* Phones: the status pill shrinks to a small coloured marker so the task text
-   gets the width. Hollow ring = Not Started, half-filled = In Progress,
-   ! = Stuck, tick = Done. Tapping it still opens the status menu. */
+   gets the width. Solid colours: grey = Not Started, blue = In Progress,
+   red ! = Stuck, green tick = Done. Tapping it still opens the status menu. */
 @media(max-width:768px){
   .task-text-wrap{max-width:none}
   .status-wrap .sp{position:relative;width:18px;height:18px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;line-height:1;border:2px solid currentColor;background:transparent;box-sizing:border-box;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .status-wrap .sp::after{content:'';position:absolute;inset:-12px -5px}
   .status-wrap .sp .sp-full{display:none}
   .status-wrap .sp .sp-mini{display:block}
-  .status-wrap .sp-not{border-color:var(--border2)}
-  .status-wrap .sp-prog{background:linear-gradient(90deg,currentColor 50%,transparent 50%)}
+  .status-wrap .sp-not{background:var(--s-not);border-color:var(--s-not)}
+  .status-wrap .sp-prog{background:var(--s-prog);border-color:var(--s-prog)}
   .status-wrap .sp-stuck{background:var(--s-stuck);border-color:var(--s-stuck)}
-  .status-wrap .sp-stuck .sp-mini,.status-wrap .sp-done .sp-mini{color:#fff}
+  .status-wrap .sp .sp-mini{color:#fff}
   .status-wrap .sp-done{background:var(--s-done);border-color:var(--s-done)}
 }
 
@@ -1176,8 +1176,8 @@ let todos=[],profiles=[],user=null;
 let curView='all',dispMode='list',sortMode='priority',filterMode='all',searchQ='',searchIncDone=false;
 // ── APP VERSION ─ bump on every meaningful change ──
 // patch (x.x.+1) = fix/tweak │ minor (x.+1.0) = feature │ major (+1.0.0) = big change
-const APP_VERSION='1.23.3';
-const APP_BUILD='2026-11-14';
+const APP_VERSION='1.23.4';
+const APP_BUILD='2026-11-20';
 
 // ── AUTO-UPDATE CHECK ───────────────────────────────────────────
 // Poll version.json on load and every 5 minutes. If the deployed
@@ -1217,6 +1217,10 @@ setInterval(checkForUpdate,60*1000);
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible')checkForUpdate();
 });
+// iOS home-screen apps don't always fire visibilitychange on resume, so also
+// check when the page is shown again or regains focus.
+window.addEventListener('pageshow',checkForUpdate);
+window.addEventListener('focus',checkForUpdate);
 (function(){const el=document.getElementById('verBadge');if(el){el.textContent='v'+APP_VERSION;el.title='Version '+APP_VERSION+' · '+APP_BUILD;}})();
 let panelId=null,calY=new Date().getFullYear(),calM=new Date().getMonth();
 let importLines=[];

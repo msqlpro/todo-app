@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.23.4 — 2026-11-20
+- Mobile: the round status marker on each task row is now a solid colour instead of a hollow ring, so it no longer looks like the tick circle. Grey = Not Started, blue = In Progress, red ! = Stuck, green tick = Done
+- The "new version available" banner is now also checked when the app is reopened or regains focus, so it shows more reliably on iPhone after an update
+
 ## v1.23.3 — 2026-11-20
 - Mobile: the status pill ("Not Started" etc.) on each task row is now a small round marker, so much more of the task description is readable. Hollow ring = Not Started, half-filled blue = In Progress, red ! = Stuck, green tick = Done. Tap it to change the status as before
 - Mobile: the task description is no longer capped at about half the row width
